@@ -1,0 +1,153 @@
+{
+  "run_at": "2026-06-01T10:44:00.245731",
+  "runs_per_prompt": 3,
+  "judge_model": "phi3",
+  "models": {
+    "mistral": {
+      "final_score": 0.729,
+      "avg_latency": 67.75691107452224,
+      "normalized_speed": 0.014543992514674621,
+      "model_stability": 0.9195650712018271,
+      "avg_judge": {
+        "correctness": 0.7645833333333332,
+        "reasoning": 0.8374999999999999,
+        "clarity": 0.7583333333333333,
+        "hallucination_free": 0.875
+      },
+      "category_scores": {
+        "factual": 0.9583,
+        "creative": 0.565,
+        "architecture": 0.7859,
+        "edge_case": 0.9158,
+        "gsm8k": 0.5333333333333333,
+        "humaneval": 0.7333333333333334
+      },
+      "category_stabilities": {
+        "factual": 0.960009629431172,
+        "creative": 0.8788763303557303,
+        "architecture": 0.91308145756718,
+        "edge_case": 0.9366810605532139,
+        "gsm8k": 0.9159932001641454,
+        "humaneval": 0.9127487491395205
+      },
+      "category_latencies": {
+        "factual": 80.55266677066666,
+        "creative": 84.45052420866668,
+        "architecture": 110.49830097899996,
+        "edge_case": 60.28999223599999,
+        "gsm8k": 49.070967525066706,
+        "humaneval": 21.679014727733403
+      },
+      "category_judge_scores": {
+        "factual": {
+          "correctness": 0.9166666666666665,
+          "reasoning": 1.0,
+          "clarity": 0.8666666666666667,
+          "hallucination_free": 1.0
+        },
+        "creative": {
+          "correctness": 0.5666666666666667,
+          "reasoning": 0.6166666666666667,
+          "clarity": 0.5333333333333334,
+          "hallucination_free": 0.6666666666666666
+        },
+        "architecture": {
+          "correctness": 0.725,
+          "reasoning": 0.7833333333333332,
+          "clarity": 0.7250000000000001,
+          "hallucination_free": 0.8333333333333333
+        },
+        "edge_case": {
+          "correctness": 0.8499999999999999,
+          "reasoning": 0.95,
+          "clarity": 0.9083333333333333,
+          "hallucination_free": 1.0
+        }
+      },
+      "gsm8k_accuracy": {
+        "correct": 8,
+        "total": 15,
+        "accuracy": 0.5333333333333333
+      },
+      "humaneval_results": {
+        "pass@1": 0.7333333333333334,
+        "passed": 11,
+        "total": 15,
+        "pass@3": 0.9912087912087912
+      }
+    },
+    "llama3": {
+      "final_score": 0.7078,
+      "avg_latency": 37.94724060752217,
+      "normalized_speed": 0.025675759935785095,
+      "model_stability": 0.9245003658723411,
+      "avg_judge": {
+        "correctness": 0.7166666666666668,
+        "reasoning": 0.775,
+        "clarity": 0.7841666666666667,
+        "hallucination_free": 0.9166666666666665
+      },
+      "category_scores": {
+        "factual": 0.86,
+        "creative": 0.81,
+        "architecture": 0.7294,
+        "edge_case": 0.735,
+        "gsm8k": 0.4666666666666667,
+        "humaneval": 0.7333333333333334
+      },
+      "category_stabilities": {
+        "factual": 0.9291268735854059,
+        "creative": 0.8617570674188837,
+        "architecture": 0.9469849989230679,
+        "edge_case": 0.9582613926110691,
+        "gsm8k": 0.9436218214233865,
+        "humaneval": 0.9072500412722327
+      },
+      "category_latencies": {
+        "factual": 40.95241403450002,
+        "creative": 47.234624638666446,
+        "architecture": 63.634532014000044,
+        "edge_case": 52.02884481916651,
+        "gsm8k": 16.77056438046663,
+        "humaneval": 7.062463758333372
+      },
+      "category_judge_scores": {
+        "factual": {
+          "correctness": 0.7833333333333334,
+          "reasoning": 0.8416666666666668,
+          "clarity": 0.8333333333333334,
+          "hallucination_free": 1.0
+        },
+        "creative": {
+          "correctness": 0.7583333333333333,
+          "reasoning": 0.7916666666666666,
+          "clarity": 0.8416666666666667,
+          "hallucination_free": 1.0
+        },
+        "architecture": {
+          "correctness": 0.6416666666666666,
+          "reasoning": 0.7083333333333334,
+          "clarity": 0.7116666666666667,
+          "hallucination_free": 0.8333333333333333
+        },
+        "edge_case": {
+          "correctness": 0.6833333333333333,
+          "reasoning": 0.7583333333333333,
+          "clarity": 0.75,
+          "hallucination_free": 0.8333333333333333
+        }
+      },
+      "gsm8k_accuracy": {
+        "correct": 7,
+        "total": 15,
+        "accuracy": 0.4666666666666667
+      },
+      "humaneval_results": {
+        "pass@1": 0.7333333333333334,
+        "passed": 11,
+        "total": 15,
+        "pass@3": 0.9912087912087912
+      }
+    }
+  }
+}
