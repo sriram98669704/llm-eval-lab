@@ -8,6 +8,31 @@ Built to answer: **"Which model is actually best — and at what?"**
 
 ---
 
+## Dashboard Screenshots
+
+### Leaderboard
+![Leaderboard](assets/leaderboard.png)
+
+### Strength Profile
+![Strength Profile 1](assets/strength_profile1.png)
+![Strength Profile 2](assets/strength_profile2.png)
+
+### Quality (Judge Scores)
+![Quality](assets/quality.png)
+
+### GSM8K (Math)
+![GSM8K](assets/gsm8k.png)
+
+### HumanEval (Code)
+![HumanEval](assets/humaneval.png)
+
+### Latency
+![Latency](assets/latency.png)
+
+---
+
+---
+
 ## What It Does
 
 Most LLM comparisons rely on vibes or a single benchmark. This project runs a structured multi-dimensional evaluation:
