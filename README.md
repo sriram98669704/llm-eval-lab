@@ -157,7 +157,7 @@ All tunable constants are at the top of their respective files:
 | `models.py` | `RUNS_PER_PROMPT` | `3` | Runs per prompt (stability) |
 | `models.py` | `EMBEDDING_MODEL` | `nomic-embed-text` | Embedding model (neutral) |
 | `judge.py` | `JUDGE_MODEL` | `phi3` | Judge model (neutral) |
-| `datasets_loader.py` | `limit=` args | `1–3` | How many GSM8K / HumanEval problems to load |
+| `datasets_loader.py` | `limit=` args | `5` | How many GSM8K / HumanEval problems to load |
 
 To run a quick single-model test, change `MODELS = ["mistral"]` in `main.py`.
 
