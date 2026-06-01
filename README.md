@@ -78,10 +78,7 @@ Each prompt is run `RUNS_PER_PROMPT` times (default: 3). Embedding cosine simila
 | Category | Type | Evaluation |
 |---|---|---|
 | `factual` | Open-ended knowledge | LLM judge |
-| `math` | Arithmetic / word problems | LLM judge |
-| `coding` | Write Python functions | LLM judge |
 | `creative` | Stories, poetry | LLM judge |
-| `opinion` | Argumentation / reasoning | LLM judge |
 | `architecture` | System design | LLM judge |
 | `edge_case` | Paradoxes, ambiguous logic | LLM judge |
 | `gsm8k` | Real math benchmark | Ground truth |

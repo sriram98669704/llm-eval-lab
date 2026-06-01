@@ -2,13 +2,18 @@
 prompts.py — Defines the benchmark suite (PROMPTS).
 
 PROMPTS maps each category name to a list of {"input", "reference"} items:
-  - factual   : open-ended prompt, scored by the LLM judge (no reference)
-  - gsm8k     : real math problems loaded from HuggingFace (ground-truth)
-  - humaneval : real coding problems loaded from HuggingFace (sandbox-tested)
 
-The commented-out block below holds extra judge-based categories (math, coding,
-creative, opinion, architecture, edge_case) — uncomment to expand the suite.
-Dataset sizes are controlled via the limit= args.
+  Judge-scored categories (phi3 evaluates correctness, reasoning, clarity, hallucination-free):
+  - factual      : open-ended knowledge questions
+  - creative     : stories, poetry, expressive writing
+  - architecture : system design and engineering tradeoffs
+  - edge_case    : paradoxes, ambiguous logic, unusual reasoning
+
+  Ground-truth categories (no judge — objective verification):
+  - gsm8k        : real math word problems, answer verified against ground truth
+  - humaneval    : real coding problems, solution executed in a sandbox
+
+  Dataset sizes controlled via the limit= args in datasets_loader.py.
 """
 
 from datasets_loader import load_gsm8k, load_humaneval
