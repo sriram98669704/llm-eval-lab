@@ -142,6 +142,10 @@ To run a quick single-model test, change `MODELS = ["mistral"]` in `main.py`.
 
 This is an actively evolving project. Planned next steps:
 
+### In Progress / Known Fixes
+- [ ] **GSM8K dashboard grouping** — group runs per problem (Run 1/2/3) the same way HumanEval does, instead of showing each run as a separate card
+- [ ] **Judge JSON robustness** — phi3 occasionally returns malformed JSON in very few cases; improving the parser to handle all edge cases so no runs fall back to zero scores
+
 ### Near-term
 - [ ] **Cloud model support** — add OpenAI (GPT-4o), Google Gemini, and Anthropic Claude to the benchmark alongside local Ollama models for a true local-vs-cloud comparison
 - [ ] **Dynamic prompt injection via UI** — enter a custom prompt in the dashboard and benchmark it live without editing any code
