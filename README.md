@@ -33,7 +33,7 @@ Each model gets a **final composite score** and a **per-category breakdown** —
 A common mistake in LLM benchmarking is letting a benchmarked model also act as judge. This project separates all three roles:
 
 - **Benchmarked models**: `mistral`, `llama3` — the models being compared
-- **Judge model**: `phi3` — a neutral third-party, never benchmarked
+- **Judge model**: `phi3` — a neutral third-party, never benchmarked (alternative: `gemma2`)
 - **Embedding model**: `nomic-embed-text` — a dedicated embedding-only model, never benchmarked
 
 This ensures no model grades its own responses or influences its own stability score.
@@ -44,7 +44,7 @@ In addition to hand-crafted prompts, the suite includes:
 - **HumanEval** — code generation problems tested by running the code in a sandbox (HuggingFace)
 
 ### Multiple Runs Per Prompt
-Each prompt is run `RUNS_PER_PROMPT` times (default: 2). Embedding cosine similarity across runs measures **response stability** — a model that gives wildly different answers to the same prompt scores lower.
+Each prompt is run `RUNS_PER_PROMPT` times (default: 3). Embedding cosine similarity across runs measures **response stability** — a model that gives wildly different answers to the same prompt scores lower.
 
 ---
 
