@@ -4,7 +4,7 @@ A local, bias-aware benchmarking framework for comparing Large Language Models a
 
 Built to answer: **"Which model is actually best — and at what?"**
 
-**[Watch Demo](https://your-video-url-here)** ← replace with your YouTube or Loom link
+**[Watch Demo](https://drive.google.com/file/d/1A08mQr5-VM5omirzYX42y14sXYffGXlb/view?usp=sharing)**
 
 ---
 
