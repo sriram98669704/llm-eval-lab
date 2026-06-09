@@ -40,10 +40,10 @@ FAMILY_SKIP = {
 }
 
 # -----------------------------
-# EMBEDDER — reserved for Step 25 (kNN live-prompt categorization).
+# EMBEDDER — used by categorizer.py (Step 22, kNN live-prompt categorization).
 # NOT used in the benchmark/eval pipeline. Kept here so the model id lives in
-# one place when kNN routing is built. (Stability scoring was removed: at
-# temperature 0 it was meaningless; reliability now = error bars across prompts.)
+# one place. (Stability scoring was removed: at temperature 0 it was meaningless;
+# reliability now = error bars across prompts.)
 # -----------------------------
 EMBEDDING_MODEL = "text-embedding-3-small"  # OpenAI
 
@@ -91,6 +91,9 @@ SPEED_SENSITIVE = ["summarization"]
 
 # -----------------------------
 # ESCALATION TRIGGER (for live data / promotion mechanic)
+# Phase 8 vision — no callers yet. Placeholders for escalation-rate tracking
+# (Step 30) and new-category promotion (Step 34). Kept here so the thresholds
+# live in one place when those steps are built; ignored by all current code.
 # -----------------------------
 ESCALATION_RATE_THRESHOLD = 0.40   # >40% escalation rate triggers re-eval alert
 MIN_PROMPTS_FOR_TRIGGER = 20       # need at least 20 live prompts before triggering

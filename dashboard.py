@@ -29,6 +29,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from config import CATEGORIES, JUDGE_FAILURE_THRESHOLD
 from storage import latest_run_dir
+from findings import compute_findings
+from report import generate_report
 
 # ─────────────────────────────────────────────────────────
 # PAGE CONFIG
@@ -155,6 +157,16 @@ selected_models = st.sidebar.multiselect(
     help="Filter which models appear in all tabs. Deselecting a model removes it from every chart and table.",
 )
 
+_report_filename = f"llm-eval-report-{summary.get('run_at', 'unknown')[:19].replace(':', '-')}.md"
+st.sidebar.download_button(
+    label="📥 Download Report",
+    data=generate_report(summary, routing, compute_findings(summary, routing), meta),
+    file_name=_report_filename,
+    mime="text/markdown",
+    width="stretch",
+    help="One-page Markdown report: key findings, leaderboard, per-category scores, and routing policy.",
+)
+
 st.sidebar.divider()
 
 # Last run timestamp
@@ -210,6 +222,108 @@ if SUMMARY_PATH.exists() and "loaded_at" not in st.session_state:
 if not selected_models:
     st.info("Select at least one model in the sidebar.")
     st.stop()
+
+
+# ─────────────────────────────────────────────────────────
+# KEY FINDINGS — headline cards shown above all tabs
+# ─────────────────────────────────────────────────────────
+_findings = compute_findings(summary, routing)
+
+if _findings:
+    _w = _findings["winner"]
+    _ru = _findings["runner_up"]
+    _tr = _findings["trailing"]
+    _bg = _findings["biggest_gap"]
+    _bv = _findings["best_value"]
+    _esc = _findings["escalation_categories"]
+
+    _gap_to_runner = _w["score"] - _ru["score"]
+    _cat_label = _bg["category"].replace("_", " ").title() if _bg["category"] else "—"
+    _esc_count = len(_esc)
+    _esc_names = ", ".join(c.replace("_", " ") for c in _esc) if _esc else "none"
+
+    # Custom HTML cards — avoids st.metric's value truncation in narrow columns.
+    # Each card: icon + label row, large value, small sub-line, tooltip via <title>.
+    _card_css = """
+    <style>
+    .finding-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 10px;
+        padding: 14px 16px 12px;
+        height: 100%;
+        box-sizing: border-box;
+    }
+    .finding-card .fc-label {
+        font-size: 0.72rem;
+        color: rgba(255,255,255,0.55);
+        margin-bottom: 6px;
+        white-space: nowrap;
+    }
+    .finding-card .fc-value {
+        font-size: 1.35rem;
+        font-weight: 700;
+        line-height: 1.2;
+        word-break: break-word;
+        margin-bottom: 4px;
+    }
+    .finding-card .fc-sub {
+        font-size: 0.72rem;
+        color: #4caf87;
+    }
+    .finding-card .fc-desc {
+        font-size: 0.70rem;
+        color: rgba(255,255,255,0.45);
+        margin-top: 5px;
+        line-height: 1.4;
+    }
+    </style>
+    """
+    st.markdown(_card_css, unsafe_allow_html=True)
+
+    _c1, _c2, _c3, _c4 = st.columns(4)
+
+    with _c1:
+        st.markdown(
+            f"""<div class="finding-card" title="{_w['short_name']} scores {_w['score']:.3f} — the highest average quality score across all 6 task categories. Ahead of {_ru['short_name']} ({_ru['score']:.3f}) by {_gap_to_runner:.3f}. {_tr['short_name']} trails at {_tr['score']:.3f}. Quality score = average of per-category scores, where each score is graded by the other two models on correctness, reasoning, clarity, and hallucination-free. 1.0 is perfect.">
+  <div class="fc-label">🏆 Overall winner</div>
+  <div class="fc-value">{_w['short_name']}</div>
+  <div class="fc-sub">↑ {_w['score']:.3f} average quality score across 6 categories</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+
+    with _c2:
+        st.markdown(
+            f"""<div class="finding-card" title="{_cat_label} has the widest quality spread across models. {_bg['best_short']} scores {_bg['best_score']:.3f}; {_bg['worst_short']} scores {_bg['worst_score']:.3f} — a {_bg['gap']:.3f} gap. This means model choice matters most for {_cat_label} tasks.">
+  <div class="fc-label">📊 Biggest category gap</div>
+  <div class="fc-value">{_cat_label}</div>
+  <div class="fc-sub">↑ ±{_bg['gap']:.2f} spread · best vs worst: {_bg['best_short']} ({_bg['best_score']:.2f}) → {_bg['worst_short']} ({_bg['worst_score']:.2f})</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+
+    with _c3:
+        st.markdown(
+            f"""<div class="finding-card" title="{_bv['short_name']} has the best quality-per-dollar ratio. Average quality score across 6 categories: {_bv['quality']:.3f}. Average measured cost per prompt: ${_bv['avg_cost']:.4f} — real API costs from the benchmark run, not list prices.">
+  <div class="fc-label">💰 Best quality per dollar</div>
+  <div class="fc-value">{_bv['short_name']}</div>
+  <div class="fc-sub">↑ {_bv['quality']:.3f} quality · ${_bv['avg_cost']:.4f}/prompt</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+
+    with _c4:
+        st.markdown(
+            f"""<div class="finding-card" title="{_esc_count} categories have a real escalation path — the default (cheapest/fastest) model differs from the best model, so a low-quality live response can be retried against a stronger model. Categories with escalation: {_esc_names}. The other {6 - _esc_count} are already routed to their top model — a failed response is returned as-is.">
+  <div class="fc-label">⚡ Escalation paths</div>
+  <div class="fc-value">{_esc_count} of 6 categories</div>
+  <div class="fc-sub">↑ {_esc_names}</div>
+</div>""",
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
 
 
 # ─────────────────────────────────────────────────────────
@@ -1050,26 +1164,60 @@ if active == "⚡ Live Test":
             "then click Refresh."
         )
     else:
+        # A run is in progress only during the execute pass (PASS 2 below). While
+        # it runs, every control is disabled so the inputs can't change mid-flight
+        # — the canonical Streamlit way to "freeze the form while busy", not a hack.
+        running = st.session_state.get("live_running", False)
+
         col_left, col_right = st.columns([1, 2])
 
         with col_left:
-            live_category = st.selectbox(
-                "Task category",
-                options=CATEGORIES,
-                key="live_category",
+            detect_mode = st.radio(
+                "Category detection",
+                options=["Auto-detect", "Pick manually"],
+                key="live_detect_mode",
+                disabled=running,
                 help=(
-                    "Which of the 6 Tilicho task types does this prompt belong to?  \n"
-                    "The routing policy picks the default model based on this category.  \n"
-                    "(Automatic category detection via kNN is a future step — Step 25.)"
+                    "**Auto-detect** — embeds your prompt using text-embedding-3-small, "
+                    "compares it against fingerprint vectors for all 6 categories, "
+                    "and picks the nearest match automatically.  \n"
+                    "**Pick manually** — you choose the category yourself; "
+                    "useful when you know the task type and want to skip the detection step."
                 ),
             )
-            run_btn = st.button("▶  Run", width="stretch", type="primary", key="live_run_btn")
+            if detect_mode == "Pick manually":
+                live_category_manual = st.selectbox(
+                    "Task category",
+                    options=CATEGORIES,
+                    key="live_category_manual",
+                    disabled=running,
+                    help=(
+                        "Choose the Tilicho task category that best describes your prompt.  \n"
+                        "The routing policy uses this to pick the default model — "
+                        "each category has a different cost/quality tradeoff baked in from the benchmark."
+                    ),
+                )
+            else:
+                live_category_manual = None
+            run_btn = st.button("▶  Run", width="stretch", type="primary", key="live_run_btn", disabled=running)
+
+        # Save prompt text per mode so it disappears on switch and reappears on
+        # return — consistent with how the results and live trace behave. We
+        # track the previous mode in our OWN key (live_last_mode), because the
+        # radio's own key is already updated to the new value by the time this
+        # runs, so comparing against it would never detect the change.
+        last_mode = st.session_state.get("live_last_mode", detect_mode)
+        if detect_mode != last_mode and not running:
+            st.session_state.setdefault("live_prompts", {})[last_mode] = st.session_state.get("live_prompt", "")
+            st.session_state["live_prompt"] = st.session_state.get("live_prompts", {}).get(detect_mode, "")
+        st.session_state["live_last_mode"] = detect_mode
 
         with col_right:
             live_prompt = st.text_area(
                 "Your prompt",
                 height=160,
                 key="live_prompt",
+                disabled=running,
                 placeholder="Type your prompt here…",
                 help=(
                     "This text will be sent to the default model for the selected category. "
@@ -1078,24 +1226,103 @@ if active == "⚡ Live Test":
                 ),
             )
 
-        # Run on click, then persist the result in session_state so it survives
-        # Streamlit's reruns. Every widget change (e.g. toggling the category
-        # dropdown) reruns the whole script — without this, the result would vanish
-        # the moment you touch any other control.
-        if run_btn and not live_prompt.strip():
-            st.warning("Please enter a prompt before running.")
-            st.session_state.pop("live_trace", None)
-        elif run_btn:
-            with st.spinner("Running… making live API calls, this takes 15–30 seconds."):
-                try:
-                    from router import run_live as _run_live
-                    st.session_state["live_trace"] = _run_live(live_prompt.strip(), live_category)
-                except Exception as exc:
-                    st.session_state["live_trace"] = {"error": "exception", "message": str(exc)}
+        # ── PASS 1 — idle. A click snapshots the inputs, flips the running flag,
+        #    and reruns so the controls re-render DISABLED before the long job
+        #    starts. (You can't disable a widget already drawn this run, so we
+        #    rerun to draw them disabled — then PASS 2 does the work.)
+        if run_btn:
+            if not live_prompt.strip():
+                st.warning("Please enter a prompt before running.")
+            else:
+                st.session_state["live_pending"] = {
+                    "prompt":          live_prompt.strip(),
+                    "mode":            detect_mode,
+                    "manual_category": live_category_manual,
+                }
+                st.session_state["live_running"] = True
+                st.rerun()
 
-        # Render the most recent result (persists across reruns until the next run)
-        if "live_trace" in st.session_state:
-            trace = st.session_state["live_trace"]
+        # ── PASS 2 — execute. Controls are disabled above. Do the work inside
+        #    st.status, streaming the router's OWN step messages live via the
+        #    status_callback (no more guessing the outcome from the trace). Store
+        #    the result keyed by the mode that produced it, then rerun to re-enable
+        #    the controls and hand off to PASS 3.
+        if running:
+            pending  = st.session_state.get("live_pending") or {}
+            p_prompt = pending.get("prompt", "")
+            p_mode   = pending.get("mode", "Auto-detect")
+            p_manual = pending.get("manual_category")
+
+            steps = []
+            def _step(msg):
+                steps.append(msg)
+                st.write(msg)
+
+            record = {"trace": None, "knn_result": None, "steps": steps}
+            try:
+                from router import run_live as _run_live
+
+                with st.status("Running…", expanded=True) as status:
+                    if p_mode == "Auto-detect":
+                        from categorizer import build_fingerprints, categorize
+                        if "fingerprints" not in st.session_state:
+                            _step("📐 Embedding 30 known prompts to build category fingerprints — one-time setup, cached for the rest of this session…")
+                            st.session_state["fingerprints"] = build_fingerprints()
+                        _step("🔍 Embedding your prompt into vector space and comparing it against all 6 category fingerprints to find the closest match…")
+                        live_category, knn_score = categorize(
+                            p_prompt, st.session_state["fingerprints"]
+                        )
+                        record["knn_result"] = (live_category, knn_score)
+                        _step(f"✅ Closest match: **{live_category}** — cosine similarity {knn_score:.2f} out of 1.0. Routing this as a {live_category} task.")
+                    else:
+                        live_category = p_manual
+                        _step(f"📋 Category manually set to **{live_category}** — skipping auto-detection and routing directly.")
+
+                    trace = _run_live(p_prompt, live_category, status_callback=_step)
+                    record["trace"] = trace
+
+                    if trace is None:
+                        status.update(label="❌ No routing policy found", state="error")
+                    elif trace.get("error"):
+                        status.update(label="❌ Run failed", state="error")
+                    elif trace.get("judged") is False:
+                        status.update(label="⚠️ Done — returned ungraded", state="complete")
+                    elif trace.get("escalated"):
+                        status.update(label=f"✅ Done — escalated to {trace.get('final_model')}", state="complete")
+                    else:
+                        status.update(label=f"✅ Done — routed to {trace.get('final_model')}", state="complete")
+
+            except Exception as exc:
+                record["trace"] = {"error": "exception", "message": str(exc)}
+
+            # Persist under the mode that produced it, clear the running flag, and
+            # rerun so the controls come back enabled and PASS 3 shows the result.
+            st.session_state.setdefault("live_results", {})[p_mode] = record
+            st.session_state["live_running"] = False
+            st.session_state.pop("live_pending", None)
+            st.rerun()
+
+        # ── PASS 3 — render the result for the CURRENT mode only. Results are
+        #    keyed by detection mode, so switching auto↔manual hides this mode's
+        #    result and shows the other mode's (or nothing): the live trace and
+        #    answer disappear on switch and reappear on return, with no manual
+        #    clear/restore logic. Skipped while a run is in progress — PASS 2 owns
+        #    the screen then.
+        record = st.session_state.get("live_results", {}).get(detect_mode) if not running else None
+        if record:
+            trace      = record.get("trace")
+            steps      = record.get("steps") or []
+            knn_result = record.get("knn_result")
+
+            if detect_mode == "Auto-detect" and knn_result:
+                knn_cat, knn_score = knn_result
+                st.caption(f"Detected category: **{knn_cat}** — similarity {knn_score:.2f}")
+
+            if steps:
+                with st.expander("🧾 Run log", expanded=False):
+                    for _s in steps:
+                        st.markdown(f"- {_s}")
+
             st.divider()
             with st.container():
                 if trace is None:
@@ -1144,7 +1371,7 @@ if active == "⚡ Live Test":
                     if live_quality is not None and quality_bar is not None:
                         delta_val = round(live_quality - quality_bar, 4)
                         m1.metric(
-                            "Default quality",
+                            "Response quality",
                             f"{live_quality:.4f}",
                             delta=f"{delta_val:+.4f} vs bar",
                             delta_color="normal",
@@ -1156,12 +1383,12 @@ if active == "⚡ Live Test":
                         )
                     elif live_quality is not None:
                         m1.metric(
-                            "Default quality", f"{live_quality:.4f}",
+                            "Response quality", f"{live_quality:.4f}",
                             help="Quality score from the graders for the default model's response.",
                         )
                     else:
                         m1.metric(
-                            "Default quality", "n/a",
+                            "Response quality", "n/a",
                             help=(
                                 "The graders couldn't score this response — both failed. "
                                 "Escalation was skipped (we never escalate without measured evidence)."
@@ -1199,9 +1426,9 @@ if active == "⚡ Live Test":
                     ans   = trace.get("answer_cost_usd", 0)
                     jdg   = trace.get("judge_cost_usd", 0)
                     st.markdown(
-                        f"**💰 Total cost: \${total:.6f}**  \n"
-                        f"&nbsp;&nbsp;&nbsp;├─ Answer generation: &nbsp;\${ans:.6f}  \n"
-                        f"&nbsp;&nbsp;&nbsp;└─ Grading (2 models): \${jdg:.6f}",
+                        f"**💰 Total cost: \\${total:.6f}**  \n"
+                        f"&nbsp;&nbsp;&nbsp;├─ Answer generation: &nbsp;\\${ans:.6f}  \n"
+                        f"&nbsp;&nbsp;&nbsp;└─ Grading (2 models): \\${jdg:.6f}",
                         unsafe_allow_html=True,
                     )
 
@@ -1213,7 +1440,7 @@ if active == "⚡ Live Test":
 
                             ec1, ec2, ec3 = st.columns(3)
                             ec1.metric(
-                                f"Default quality (`{trace.get('default_model')}`)",
+                                f"Response quality (`{trace.get('default_model')}`)",
                                 f"{live_quality:.4f}" if live_quality is not None else "n/a",
                                 help="Quality of the default model's response — this fell below the bar.",
                             )

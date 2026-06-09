@@ -283,7 +283,22 @@ def _print_trace(trace):
     print(f"    -> returning {trace['final_model']}  ({trace.get('reason', '')})")
 
 
-def run_live(prompt, category, policy=None):
+def _emit(callback, message):
+    """
+    Best-effort live status update for the UI. `callback` is an optional
+    one-arg function (e.g. the dashboard's st.write). Wrapped in try/except so
+    that reporting a step can never break the actual run — if the UI hook
+    raises, the run continues unaffected.
+    """
+    if callback is None:
+        return
+    try:
+        callback(message)
+    except Exception:
+        pass
+
+
+def run_live(prompt, category, policy=None, status_callback=None):
     """
     Apply the routing policy to ONE live prompt — the live counterpart to
     derive_routing_table(). The offline table decides the policy; this applies it.
@@ -316,6 +331,11 @@ def run_live(prompt, category, policy=None):
                   routing.json, or the full routing dict (auto-unwrapped).
                   If None, auto-loaded from routing.json — so the simplest
                   valid call is just: run_live(prompt, category)
+        status_callback: optional one-arg function called with a short
+                  human-readable string at each internal milestone (default
+                  model call, live score, escalation decision, escalated call).
+                  Lets a UI show a truly live step-by-step trace. Best-effort —
+                  errors in the callback never affect the run. Default None.
 
     Returns:
         trace dict (see code), or None if the category has no policy.
@@ -341,9 +361,11 @@ def run_live(prompt, category, policy=None):
     quality_bar   = cat_policy["quality_bar"]
 
     # --- 1. Run + judge + score the DEFAULT model ---
+    _emit(status_callback, f"⚡ Calling **{default_model}** — the benchmark's recommended model for **{category}** tasks. Two independent graders will score the response…")
     default_result = _run_and_score(default_model, prompt, category)
     if default_result is None:
         # The default model never answered — nothing to return, fail honestly.
+        _emit(status_callback, f"❌ **{default_model}** failed to respond after retries — nothing to return.")
         print(f"  [run_live] Default model {default_model} failed — no response.")
         return {
             "category":        category,
@@ -388,29 +410,35 @@ def run_live(prompt, category, policy=None):
     if default_quality is None:
         trace["judged"] = False
         trace["reason"] = "default unjudged (jury failed) — not escalating without evidence"
+        _emit(status_callback, "⚠️ Both graders failed to produce a score — returning the answer ungraded. We never escalate without a measured quality shortfall.")
         _print_trace(trace)
         return trace
 
     trace["judged"] = True
+    _emit(status_callback, f"📊 **{default_model}** responded — two graders scored it **{default_quality:.2f}** (quality bar for **{category}**: **{quality_bar:.2f}**).")
 
     # (b) Default clears the bar -> keep the cheap/fast choice.
     if default_quality >= quality_bar:
         trace["reason"] = "default cleared the quality bar"
+        _emit(status_callback, f"✅ **{default_quality:.2f}** cleared the bar of **{quality_bar:.2f}** — **{default_model}** handled it well. No escalation needed.")
         _print_trace(trace)
         return trace
 
     # (c) Below bar, but the default IS already the best model -> nothing better.
     if escalate_to == default_model:
         trace["reason"] = "below bar but already on the best model — no higher option"
+        _emit(status_callback, f"⚠️ **{default_quality:.2f}** fell below the bar of **{quality_bar:.2f}** — but **{default_model}** is already the highest-quality model for **{category}**, nowhere to escalate. Returning its response.")
         _print_trace(trace)
         return trace
 
     # (d) Below bar and a higher-quality model exists -> escalate.
+    _emit(status_callback, f"⚠️ **{default_quality:.2f}** fell below the bar of **{quality_bar:.2f}** — escalating to **{escalate_to}** for a stronger answer…")
     escalated_result = _run_and_score(escalate_to, prompt, category)
     if escalated_result is None:
         # Escalation target failed — fall back to the default response, flagged.
         trace["reason"] = "below bar; escalation target failed — returning default"
         trace["escalation_failed"] = True
+        _emit(status_callback, f"❌ **{escalate_to}** failed to respond after retries — falling back to **{default_model}**'s answer.")
         _print_trace(trace)
         return trace
 
@@ -419,6 +447,10 @@ def run_live(prompt, category, policy=None):
     trace["final_response"] = escalated_result["response"]
     trace["escalated_call"] = escalated_result
     trace["reason"]         = "default below bar — escalated to highest-quality model"
+
+    _esc_q = escalated_result["quality"]
+    _esc_q_str = f"{_esc_q:.2f}" if _esc_q is not None else "n/a"
+    _emit(status_callback, f"📊 **{escalate_to}** responded — escalated score **{_esc_q_str}** vs default **{default_quality:.2f}** (bar: **{quality_bar:.2f}**).")
 
     # Roll both legs into the three cost fields (answers + judging = all-in).
     answer_cost = (default_result["cost_usd"] or 0.0) + (escalated_result["cost_usd"] or 0.0)
@@ -461,8 +493,9 @@ def route(task, policy=None):
     explains the choice. Any other system can import and call this.
 
     Args:
-        task:   a category name, e.g. "coding". (Mapping a free-text prompt to a
-                category is the future kNN step; for now task IS the category.)
+        task:   a category name, e.g. "coding". (Free-text prompts are mapped to
+                a category by categorizer.py / the Live Test tab; route() takes
+                the already-resolved category.)
         policy: the routing policy mapping {category: {...}}. If None, it is
                 auto-loaded from routing.json so a caller can simply do
                 route("coding") with nothing else. Pass a dict to stay pure

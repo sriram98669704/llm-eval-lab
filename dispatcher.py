@@ -126,7 +126,7 @@ def _call_together(model, prompt):
 
 
 # -----------------------------
-# EMBEDDING — reserved for Step 25 kNN live-prompt categorization.
+# EMBEDDING — used by categorizer.py (Step 22, kNN live-prompt categorization).
 # Not used in the benchmark or routing pipeline.
 # -----------------------------
 @retry(
@@ -136,13 +136,16 @@ def _call_together(model, prompt):
 )
 def embed(text):
     """
-    Get a vector embedding for `text` using text-embedding-3-small.
+    Get vector embedding(s) using text-embedding-3-small.
 
-    Reserved for Step 25 kNN live-prompt categorization (mapping a free-text
-    prompt to one of the 6 CEO categories without the user having to label it).
-    Not used in the benchmark or routing pipeline — do not call this from
-    the eval loop.
+    `text` can be a single string or a list of strings.
+    - Single string → returns one vector (list of floats).
+    - List of strings → returns a list of vectors in the same order.
+      The entire list is sent in one API call, so callers should batch
+      where possible (e.g. build_fingerprints sends all 30 prompts at once).
 
+    Used by categorizer.py (Step 22, kNN live-prompt categorization).
+    NOT used in the benchmark or routing pipeline — keep it out of the eval loop.
     Retried up to 3 times on failure.
     """
     from openai import OpenAI
@@ -153,6 +156,8 @@ def embed(text):
         model=EMBEDDING_MODEL,
         input=text
     )
+    if isinstance(text, list):
+        return [item.embedding for item in response.data]
     return response.data[0].embedding
 
 
