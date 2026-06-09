@@ -21,7 +21,7 @@ streamlit run dashboard.py      # explore results + run live prompts
 - **6 task categories**, 5 prompts each — 30 prompts, 90 model responses per run
 - **Leave-one-out jury** — every response graded by the other two models, never by itself
 - **Quality-driven routing** — one default + one escalation target derived per category
-- **Live Test** — route any prompt in real time, with live grading and automatic escalation
+- **Live Test** — put the routing policy to the test on *your own* prompt: it picks the model, grades the answer live, and escalates if quality falls short
 - **150 unit tests** — the *test suite* runs fully offline (the benchmark and Live Test make real API calls; the tests don't), covering scoring math, parsing, routing, and key-handling
 
 ---
@@ -147,9 +147,9 @@ streamlit run dashboard.py
 | **📊 Eval** | Per-model × per-category quality heatmap, with score spread (std dev) on hover |
 | **🔬 Benchmark** | The raw data — every prompt, every answer, every grader's score |
 | **🗺️ Routing** | Quality-bar table, routing-flow diagram, and grading-reliability checks |
-| **⚡ Live Test** | Run any prompt through the live policy with your own keys — streams each step as it happens |
+| **⚡ Live Test** | Test the routing policy on a prompt of your own (not one of the fixed 30) — it picks the model, grades the answer live, and escalates if quality falls short, streaming each step as it happens |
 
-The **Live Test** tab auto-detects the category from your prompt using k-nearest-neighbour over prompt embeddings, showing its confidence (cosine similarity) so you can override with **Pick manually** when a prompt sits on a category boundary.
+**What the Live Test tab is for:** the benchmark proves the policy on 30 known prompts; Live Test lets you challenge that same policy with *anything you type*, end to end — category detection → model selection → live grading → escalation decision → final answer and cost. It auto-detects the category using k-nearest-neighbour over prompt embeddings, showing its confidence (cosine similarity) so you can override with **Pick manually** when a prompt sits on a category boundary.
 
 ---
 
@@ -198,7 +198,7 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# fill in OPENAI_API_KEY, ANTHROPIC_API_KEY, TOGETHER_API_KEY
+# fill in OPENAI_API_KEY, ANTHROPIC_API_KEY, TOGETHER_API_KEY (for DeepSeek)
 ```
 
 `.env` is gitignored and never committed. For the deployed app, no `.env` exists — Live Test uses the BYOK panel instead.
