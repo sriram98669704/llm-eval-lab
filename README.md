@@ -163,6 +163,15 @@ The Live Test tab makes real, paid API calls, so it needs keys. The security mod
 - Anything key-shaped is **redacted** before it can ever reach the UI or a log, as defence-in-depth against provider errors that echo partial keys.
 - Keys vanish when you close the tab, and a **Clear keys** button wipes them on demand.
 
+### Where each key path is used
+
+There are two separate places keys come from, for two separate jobs:
+
+- **Benchmark + local dev → `.env`.** The benchmark pipeline (`python main.py`, which runs the 30 prompts in `prompts.json` across all models) reads keys from a local `.env`. That's the offline batch job that produces the leaderboard and routing policy — it needs your keys on the machine running it.
+- **Deployed Live Test → BYOK.** The deployed app has no `.env`, so the Live Test tab uses bring-your-own-keys — each visitor's pasted keys, scoped to their own browser session.
+
+**Precedence is env-first.** If a local `.env` supplies all three keys, Live Test uses them directly and the paste panel stays hidden — convenient when you're developing locally and already have keys on hand. The panel only appears when the environment isn't *fully* populated: the app checks whether all three keys are present, so to see the BYOK panel on your own machine you can either delete `.env` entirely, or simply remove one provider's line from it (e.g. drop `TOGETHER_API_KEY`) — a single missing key flips it to BYOK mode. Either way, keys are only ever *read* — never written to disk, logs, or `os.environ`.
+
 The four read-only tabs (Leaderboard, Eval, Benchmark, Routing) need no keys at all — they run entirely off the pre-computed benchmark data. Key resolution is pure, side-effect-free, and covered by [`tests/test_byok.py`](tests/test_byok.py), including an explicit assertion that `os.environ` is never mutated.
 
 ---
@@ -285,6 +294,8 @@ llm-eval-lab/
 | `agent_planning` | Multi-agent workflows, AI orchestration |
 
 These are deliberately practical, open-ended tasks — not multiple-choice academic benchmarks — so the scores reflect the kind of work the models would actually be routed for.
+
+**The suite is configurable, not fixed.** The 30 prompts live in `prompts.json` (5 per category). Add, swap, or expand them and re-run `python main.py` — every downstream artifact (scores, the routing policy, the dashboard) recomputes from whatever the suite contains. The `run_fingerprint` in `meta.json` changes whenever the prompt set does, so two runs are always distinguishable. 30 is the starting suite, not a ceiling.
 
 ---
 
