@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "run": {
+    "started_at": "2026-06-08T23:27:26.639274",
+    "finished_at": "2026-06-08T23:58:51.954550",
+    "duration_seconds": 1885.3
+  },
+  "code": {
+    "git_sha": "6ea331d",
+    "git_branch": "main",
+    "git_dirty": true
+  },
+  "environment": {
+    "python_version": "3.9.6",
+    "packages": {
+      "openai": "2.41.0",
+      "anthropic": "0.107.1",
+      "together": "2.9.0"
+    }
+  },
+  "config": {
+    "temperature": 0,
+    "evaluated_models": [
+      "gpt-4o",
+      "claude-sonnet-4-5",
+      "deepseek-ai/DeepSeek-V4-Pro"
+    ],
+    "judge_models": [
+      "gpt-4o",
+      "claude-sonnet-4-5",
+      "deepseek-ai/DeepSeek-V4-Pro"
+    ],
+    "family_skip": {
+      "gpt-4o": "gpt-4o",
+      "claude-sonnet-4-5": "claude-sonnet-4-5",
+      "deepseek-ai/DeepSeek-V4-Pro": "deepseek-ai/DeepSeek-V4-Pro"
+    },
+    "tolerances": {
+      "default": 0.05,
+      "tight": 0.03,
+      "tight_categories": [
+        "coding",
+        "architecture"
+      ]
+    },
+    "speed_sensitive": [
+      "summarization"
+    ]
+  },
+  "prompts": {
+    "total": 18,
+    "counts": {
+      "architecture": 3,
+      "coding": 3,
+      "debugging": 3,
+      "summarization": 3,
+      "business_writing": 3,
+      "agent_planning": 3
+    }
+  },
+  "run_fingerprint": "645231dc46dba625",
+  "judge_health": {
+    "by_contestant_category": {
+      "gpt-4o": {
+        "architecture": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "coding": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "debugging": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "summarization": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "business_writing": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "agent_planning": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        }
+      },
+      "claude-sonnet-4-5": {
+        "architecture": {
+          "scored": 2,
+          "single_judge": 1,
+          "unscored": 0
+        },
+        "coding": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "debugging": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "summarization": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "business_writing": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "agent_planning": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        }
+      },
+      "deepseek-ai/DeepSeek-V4-Pro": {
+        "architecture": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "coding": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "debugging": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "summarization": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "business_writing": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        },
+        "agent_planning": {
+          "scored": 3,
+          "single_judge": 0,
+          "unscored": 0
+        }
+      }
+    },
+    "by_judge_model": {
+      "claude-sonnet-4-5": {
+        "attempted": 36,
+        "succeeded": 36
+      },
+      "deepseek-ai/DeepSeek-V4-Pro": {
+        "attempted": 36,
+        "succeeded": 35
+      },
+      "gpt-4o": {
+        "attempted": 36,
+        "succeeded": 35
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
-results.jsonl
 __pycache__/
 *.pyc
 .env
 .DS_Store
 venv/
+STEPS.md
+KNOWN_ISSUES.md

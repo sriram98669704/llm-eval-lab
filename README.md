@@ -1,88 +1,105 @@
 # LLM Eval Lab
 
-A local, bias-aware benchmarking framework for comparing Large Language Models across multiple task categories — with an LLM judge, real-world datasets, semantic stability scoring, and a live Streamlit dashboard.
+A structured benchmarking and routing framework built to answer one question for
+Tilicho Labs: **"Which model should we use for which type of task — and when
+should we automatically upgrade to a better one?"**
 
-Built to answer: **"Which model is actually best — and at what?"**
-
-**[Watch Demo](https://drive.google.com/file/d/1A08mQr5-VM5omirzYX42y14sXYffGXlb/view?usp=sharing)**
-
----
-
-## Dashboard Screenshots
-
-### Leaderboard
-![Leaderboard](assets/leaderboard.png)
-
-### Strength Profile
-![Strength Profile 1](assets/strength_profile1.png)
-![Strength Profile 2](assets/strength_profile2.png)
-
-### Quality (Judge Scores)
-![Quality](assets/quality.png)
-
-### GSM8K (Math)
-![GSM8K](assets/gsm8k.png)
-
-### HumanEval (Code)
-![HumanEval](assets/humaneval.png)
-
-### Latency
-![Latency](assets/latency.png)
-
----
+> 🎥 **Demo:** [Watch the walkthrough](YOUR_DEMO_URL_HERE)
 
 ---
 
 ## What It Does
 
-Most LLM comparisons rely on vibes or a single benchmark. This project runs a structured multi-dimensional evaluation:
+Runs a full benchmark across three frontier LLMs on six task categories specific
+to Tilicho Labs. Produces a routing policy that picks the right model per task —
+cheapest or fastest among those that meet the quality bar — and a live handler
+that grades any prompt in real-time and escalates automatically when quality falls short.
 
-| Dimension | How It's Measured |
-|---|---|
-| **Correctness** | LLM judge (phi3) scores each response 0–1 |
-| **Reasoning** | LLM judge evaluates logical depth |
-| **Clarity** | LLM judge scores readability and structure |
-| **Hallucination** | LLM judge penalizes made-up facts |
-| **Math accuracy** | Ground truth comparison via GSM8K dataset |
-| **Code correctness** | Sandboxed execution via HumanEval dataset |
-| **Response stability** | Cosine similarity of embeddings across multiple runs |
-| **Speed** | Latency normalized to a 0–1 score |
+A Streamlit dashboard surfaces everything: leaderboard, per-category heatmap,
+cost and latency breakdowns, routing policy, grading reliability, and a live prompt tester.
 
-Each model gets a **final composite score** and a **per-category breakdown** — so you can see exactly where one model beats another.
+### Three models under evaluation
 
----
-
-## Key Design Decisions
-
-### Bias Elimination
-A common mistake in LLM benchmarking is letting a benchmarked model also act as judge. This project separates all three roles:
-
-- **Benchmarked models**: `mistral`, `llama3` — the models being compared
-- **Judge model**: `phi3` — a neutral third-party, never benchmarked (alternative: `gemma2`)
-- **Embedding model**: `nomic-embed-text` — a dedicated embedding-only model, never benchmarked
-
-This ensures no model grades its own responses or influences its own stability score.
-
-### Real Benchmarks (Not Just Vibe Prompts)
-In addition to hand-crafted prompts, the suite includes:
-- **GSM8K** — grade-school math problems with ground-truth answers (HuggingFace)
-- **HumanEval** — code generation problems tested by running the code in a sandbox (HuggingFace)
-
-### Multiple Runs Per Prompt
-Each prompt is run `RUNS_PER_PROMPT` times (default: 3). Embedding cosine similarity across runs measures **response stability** — a model that gives wildly different answers to the same prompt scores lower.
-
----
-
-## Prompt Categories
-
-| Category | Type | Evaluation |
+| Model | Provider | Strength |
 |---|---|---|
-| `factual` | Open-ended knowledge | LLM judge |
-| `creative` | Stories, poetry | LLM judge |
-| `architecture` | System design | LLM judge |
-| `edge_case` | Paradoxes, ambiguous logic | LLM judge |
-| `gsm8k` | Real math benchmark | Ground truth |
-| `humaneval` | Real coding benchmark | Sandboxed execution |
+| `gpt-4o` | OpenAI | Coding, debugging, reasoning |
+| `claude-sonnet-4-5` | Anthropic | Architecture, writing |
+| `deepseek-ai/DeepSeek-V4-Pro` | DeepSeek (via Together AI) | Speed, summarization, low cost |
+
+### Six task categories
+
+`architecture` · `coding` · `debugging` · `summarization` · `business_writing` · `agent_planning`
+
+Five prompts per category (30 total). All grader-scored — no ground-truth datasets needed.
+
+---
+
+## How It Works
+
+### One currency: quality
+
+Quality (`category_score`) is a task-aware weighted dot-product of four dimensions —
+correctness, reasoning, clarity, hallucination-free — with weights tuned per category
+(e.g. coding weights correctness 60%, reasoning 30%, clarity 10%).
+
+Quality is the only thing that decides:
+- **Leaderboard rank** — overall quality = average of per-category scores
+- **Routing eligibility** — a model must clear the `quality_bar` to be the default
+- **Escalation trigger** — only a quality shortfall causes escalation
+
+Cost and latency are shown as separate axes. They only choose *among* models that
+already clear the quality bar — they never affect who ranks higher or who escalates.
+
+### Leave-one-out grading
+
+Each response is graded by the **other two models** — never itself. No separate
+grader tier needed. The final score is the average of two independent grades per response.
+
+```
+gpt-4o response              → graded by claude-sonnet-4-5 + deepseek-ai/DeepSeek-V4-Pro
+claude-sonnet-4-5 response   → graded by gpt-4o + deepseek-ai/DeepSeek-V4-Pro
+deepseek-ai/DeepSeek-V4-Pro  → graded by gpt-4o + claude-sonnet-4-5
+```
+
+### Routing policy (offline)
+
+After the benchmark, `derive_routing_table()` builds a policy per category:
+
+- `quality_bar` = best quality − tolerance (tight 0.03 for coding/architecture, 0.05 elsewhere)
+- `default` = cheapest eligible model (or fastest for `summarization`)
+- `escalate_to` = highest-quality model in that category
+
+Saved as `routing.json` inside the run folder. The `route(task)` function loads
+the latest policy instantly at $0 — no model call needed.
+
+### Live routing (online)
+
+`run_live(prompt, category)` applies the policy to a real prompt:
+
+1. Runs the default (cheapest/fastest eligible) model
+2. Grades it live using the other two models
+3. If quality ≥ bar → returns the answer (cheap/fast path, done)
+4. If quality < bar → escalates to the best model, re-grades, returns that
+
+Costs are tracked in full: answer cost + grading cost = all-in total per prompt.
+
+---
+
+## Dashboard
+
+```bash
+streamlit run dashboard.py
+```
+
+Five tabs:
+
+| Tab | What it shows |
+|---|---|
+| **Leaderboard** | Quality Score (avg) per model, with cost and latency columns |
+| **Heatmap** | Per-model × per-category quality scores with std dev on hover |
+| **Cost & Latency** | Side-by-side bar charts; cost per prompt and avg latency |
+| **Routing** | Policy table (quality bar formula), routing flow diagram, grading reliability |
+| **Live Test** | Run any prompt through the live policy right now; see cost breakdown |
 
 ---
 
@@ -90,40 +107,57 @@ Each prompt is run `RUNS_PER_PROMPT` times (default: 3). Embedding cosine simila
 
 ```
 llm-eval-lab/
-├── main.py              # Entry point — runs the full pipeline
-├── models.py            # Evaluation engine (runs models, embeddings, scoring)
-├── judge.py             # LLM-as-a-judge scorer (phi3)
-├── prompts.py           # Benchmark prompt suite (all categories)
-├── metrics.py           # Scoring functions (stability, latency, final score)
-├── router.py            # Routes a query category to the best model
-├── storage.py           # Logs every run to results.jsonl
-├── sandbox.py           # Sandboxed Python execution for HumanEval
-├── datasets_loader.py   # Loads GSM8K and HumanEval from HuggingFace
-├── dashboard.py         # Streamlit dashboard — reads summary.json
-├── summary.json         # Latest run output (auto-generated by main.py)
-└── results.jsonl        # Per-run detail log (auto-generated)
+├── main.py          # Orchestrator — runs the full benchmark pipeline
+├── models.py        # Evaluation engine — calls models, grades, aggregates scores
+├── judge.py         # Leave-one-out grading logic
+├── router.py        # derive_routing_table() + run_live() + route()
+├── dispatcher.py    # Single entry point for all API calls (OpenAI / Anthropic / Together)
+├── pricing.py       # Token cost calculation (per-call USD)
+├── metrics.py       # Scoring math — category_score, compute_final_score, score_std
+├── prompts.py       # Prompt loader
+├── prompts.json     # 30 prompts (6 categories × 5 prompts)
+├── storage.py       # All file I/O — writes each run into data/runs/, reads the latest
+├── config.py        # Single source of truth — models, categories, tolerances, thresholds
+├── dashboard.py     # Streamlit dashboard — leaderboard, heatmap, routing, live test
+└── data/
+    ├── index.json   # Registry of every run — the dashboard reads the newest entry
+    └── runs/
+        └── 2026-06-08T23-27-26/   # One folder per run — the single source of truth
+            ├── summary.json       # Aggregated scores per model
+            ├── routing.json       # Routing policy (the headline artifact)
+            ├── results.jsonl      # Per-prompt detail records
+            └── meta.json          # Reproducibility receipt — git SHA, env, config
 ```
+
+Each run writes its four artifacts into its own timestamped folder and never
+overwrites a previous run. The dashboard always reads the newest run, resolved
+from `data/index.json`.
 
 ---
 
 ## How to Run
 
 ### Prerequisites
-- [Ollama](https://ollama.com) installed and running locally
+
 - Python 3.9+
-- Pull the required models:
+- API keys for OpenAI, Anthropic, and Together AI
+
+### Install
 
 ```bash
-ollama pull mistral
-ollama pull llama3
-ollama pull phi3
-ollama pull nomic-embed-text
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-### Install Python dependencies
+### Set API keys
 
-```bash
-pip install ollama streamlit datasets
+Copy `.env.example` to `.env` and fill in your keys:
+
+```
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+TOGETHER_API_KEY=...
 ```
 
 ### Run the benchmark
@@ -132,66 +166,68 @@ pip install ollama streamlit datasets
 python main.py
 ```
 
-This benchmarks all models across all categories and saves results to `summary.json`.
+Benchmarks all three models across all six categories. Prints the leaderboard and
+routing table. Saves the run under `data/runs/<timestamp>/` (summary, routing,
+meta, results) and registers it in `data/index.json`.
 
 ### Launch the dashboard
 
 ```bash
+source venv/bin/activate
 streamlit run dashboard.py
 ```
 
-Opens a live Streamlit dashboard with leaderboard, per-category breakdown, and routing recommendations.
+### Look up the routing policy (free, no API call)
+
+```python
+from router import route
+result = route("coding")
+# {"model": "gpt-4o", "why": "...", "escalate_to": "gpt-4o"}
+```
+
+### Route a live prompt
+
+```python
+from router import run_live
+
+# Policy auto-loads from the latest run — no path needed
+trace = run_live("Write a FastAPI endpoint that...", "coding")
+print(trace["final_response"])
+```
 
 ---
 
 ## Configuration
 
-All tunable constants are at the top of their respective files:
+All tunable constants live in `config.py` — nowhere else.
 
-| File | Constant | Default | What It Controls |
-|---|---|---|---|
-| `main.py` | `MODELS` | `["mistral", "llama3"]` | Models to benchmark |
-| `models.py` | `RUNS_PER_PROMPT` | `3` | Runs per prompt (stability) |
-| `models.py` | `EMBEDDING_MODEL` | `nomic-embed-text` | Embedding model (neutral) |
-| `judge.py` | `JUDGE_MODEL` | `phi3` | Judge model (neutral) |
-| `datasets_loader.py` | `limit=` args | `5` | How many GSM8K / HumanEval problems to load |
-
-To run a quick single-model test, change `MODELS = ["mistral"]` in `main.py`.
-
----
-
-## Roadmap
-
-This is an actively evolving project. Planned next steps:
-
-### In Progress / Known Fixes
-- [ ] **GSM8K dashboard grouping** — group runs per problem (Run 1/2/3) the same way HumanEval does, instead of showing each run as a separate card
-- [ ] **Judge JSON robustness** — phi3 occasionally returns malformed JSON in very few cases; improving the parser to handle all edge cases so no runs fall back to zero scores
-
-### Near-term
-- [ ] **Cloud model support** — add OpenAI (GPT-4o), Google Gemini, and Anthropic Claude to the benchmark alongside local Ollama models for a true local-vs-cloud comparison
-- [ ] **Dynamic prompt injection via UI** — enter a custom prompt in the dashboard and benchmark it live without editing any code
-- [ ] **Run history** — persist multiple benchmark runs so you can compare results over time as models update
-
-### Medium-term
-- [ ] **More real benchmarks** — MMLU (multi-subject knowledge), HellaSwag (commonsense reasoning), TruthfulQA (hallucination resistance)
-- [ ] **Model cost tracking** — latency × token count → estimated API cost per model per task
-- [ ] **Export reports** — one-click PDF / CSV summary for sharing results
-- [ ] **Configurable weights** — let the user tune how much correctness, speed, and stability each contribute to the final score via the dashboard
-
-### Longer-term
-- [ ] **Multi-modal benchmarking** — image understanding, audio transcription
-- [ ] **Fine-tuned model support** — compare base vs fine-tuned variants of the same model
-- [ ] **Hosted leaderboard** — public dashboard with community-submitted benchmark results
+| Constant | Default | What It Controls |
+|---|---|---|
+| `EVALUATED_MODELS` | 3 cloud models | Which models are benchmarked |
+| `CATEGORIES` | 6 task categories | Task types |
+| `TEMPERATURE` | `0` | Deterministic outputs |
+| `DEFAULT_TOLERANCE` | `0.05` | Quality bar width (most categories) |
+| `TIGHT_TOLERANCE` | `0.03` | Quality bar width (coding, architecture) |
+| `SPEED_SENSITIVE` | `["summarization"]` | Categories where fastest wins (not cheapest) |
+| `JUDGE_FAILURE_THRESHOLD` | `0.20` | Grading failure rate that triggers a reliability warning |
 
 ---
 
-## Why This Project
+## Reproducibility
 
-Built to develop a deep, practical understanding of how LLMs differ in capability — not just in marketing claims. The goal is a tool that gives an honest, reproducible answer to: *"For my specific use case, which model should I actually use?"*
+Every run produces `meta.json` with:
+- Git SHA + dirty flag
+- Python and SDK versions
+- Full config snapshot
+- `run_fingerprint` — SHA-256 of prompts + config + scoring weights
+
+If the fingerprint matches between two runs, any score difference is model drift —
+not a config or prompt change.
 
 ---
 
-## License
+## What's Next
 
-MIT
+**kNN live-prompt categorization** — automatically map a free-text prompt to the
+right category using embeddings, so callers don't need to pass `category` explicitly.
+The embedding model (`text-embedding-3-small`) is already wired in `config.py`.

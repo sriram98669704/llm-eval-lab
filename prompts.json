@@ -1,0 +1,109 @@
+{
+  "architecture": [
+    {
+      "prompt": "Design a multi-agent AI system for enterprise client onboarding at a SaaS company. The system must collect client requirements, provision their environment, run data validation checks, and send a summary report. Specify each agent's role, inputs, outputs, and how they hand off to each other. Include failure handling."
+    },
+    {
+      "prompt": "We have a monolithic Python backend serving 200k daily users. It handles document ingestion, LLM inference, and user auth in a single codebase. We need to migrate to microservices over 6 months without downtime. Design the migration strategy: what to split first, how to handle shared state, and how to run old and new systems in parallel."
+    },
+    {
+      "prompt": "Design a real-time AI pipeline that processes incoming customer support tickets for an enterprise client. The pipeline must classify ticket urgency, route to the right team, draft a suggested reply using an LLM, and log everything to a data warehouse. Throughput requirement: 500 tickets per minute at peak. Cover the architecture, message queue design, and scaling approach."
+    },
+    {
+      "prompt": "Architect a multi-tenant SaaS platform for enterprise AI tools where each tenant has isolated data, separate API rate limits, and customizable model routing policies. The platform must support 500 tenants, each with up to 50 users. Cover: data isolation strategy, authentication, routing layer, and how tenant-specific configs are stored and applied."
+    },
+    {
+      "prompt": "Design the storage layer for an AI platform that needs to handle three types of data: high-dimensional embeddings for semantic search (tens of millions of vectors), structured metadata (user IDs, timestamps, categories), and raw document blobs. The system must support sub-100ms semantic search and full audit logging. What databases do you use, how are they connected, and what are the tradeoffs?"
+    }
+  ],
+
+  "coding": [
+    {
+      "prompt": "Write a FastAPI endpoint in Python that accepts a plain-text document via POST request, calls the OpenAI API to summarize it in 3 bullet points, and streams the response back to the client using Server-Sent Events. Include proper error handling for API failures and request validation."
+    },
+    {
+      "prompt": "Write an async Python function called retry_with_backoff(func, max_attempts=3, base_delay=1.0) that calls an async function, retries on exception with exponential backoff and jitter, logs each failed attempt with the error, and raises the last exception if all attempts fail. Include type hints and a usage example."
+    },
+    {
+      "prompt": "Write a Python class LLMClientPool that manages connections to three LLM providers (OpenAI, Anthropic, DeepSeek). It must: enforce per-provider rate limits (requests per minute), round-robin across available providers, fall back to the next provider if one is rate-limited, and expose a single async call(prompt) method. Include thread safety."
+    },
+    {
+      "prompt": "Write a FastAPI dependency function get_current_user() that reads a Bearer token from the Authorization header, validates it against a Redis cache of active sessions, returns the associated user object, and raises HTTP 401 with a clear error message if the token is missing, malformed, or expired. Show how to use it in a route."
+    },
+    {
+      "prompt": "Write an async Python function fan_out(prompts: list[str], models: list[str]) that sends each prompt to each model in parallel using asyncio.gather, collects all results into a dict keyed by (prompt, model), handles individual failures gracefully without cancelling other requests, and returns the results dict. Include a timeout per call."
+    }
+  ],
+
+  "debugging": [
+    {
+      "prompt": "Our FastAPI application starts timing out under load. When concurrent requests exceed 50, response times jump from 200ms to 8-12 seconds and CPU hits 100%. All endpoints are defined as async but we're calling a third-party PDF parsing library synchronously inside them. Walk through why this causes the problem and exactly how to fix it."
+    },
+    {
+      "prompt": "We have a Redis-based job queue using LPUSH to enqueue and BRPOP to dequeue. Under normal load jobs process in order, but under high load (1000+ jobs/minute) we're seeing jobs processed out of the expected sequence. Multiple worker processes are running. What are the likely causes and how do we investigate and fix this?"
+    },
+    {
+      "prompt": "Our integration with a third-party LLM API randomly returns empty string responses about 5% of the time. No exception is thrown, status code is 200, but response.choices[0].message.content is an empty string. This happens more often during business hours. Walk through a systematic debugging approach to identify root cause and implement a fix."
+    },
+    {
+      "prompt": "A Python async function works correctly with asyncio.gather on 10 concurrent tasks but intermittently deadlocks when we scale to 100 concurrent tasks. The function opens a database connection from a connection pool (max size 20), runs a query, and closes the connection. Why does this deadlock and how do we fix it without just increasing the pool size?"
+    },
+    {
+      "prompt": "Our vector similarity search works correctly in the development environment but returns wrong top-k results in production despite using the same embedding model and query. We've confirmed the index has the right number of vectors. Inputs are identical. Walk through every possible cause — from data pipeline to index configuration to query-time differences — and how to isolate which one is the problem."
+    }
+  ],
+
+  "summarization": [
+    {
+      "prompt": "Summarize the following meeting transcript into 4-5 bullet points covering key decisions and action items:\n\n\"Meeting: AI Product Roadmap Review, June 2025. Attendees: CEO (Rahul), CTO (Meera), Product Lead (Arjun).\n\nRahul: We need to decide whether to prioritize the multi-agent orchestration feature or the fine-tuning pipeline for Q3. Our enterprise clients are asking for both.\nMeera: From an engineering standpoint, the orchestration feature is closer to done — maybe 6 weeks of work. Fine-tuning pipeline needs a new infrastructure layer, probably 14 weeks minimum.\nArjun: Our top 3 enterprise clients specifically mentioned orchestration in their renewal discussions. Fine-tuning is more of a prospect request.\nRahul: Let's go with orchestration for Q3 and push fine-tuning to Q4. Meera, can you get it to beta by August 15?\nMeera: Yes, if we freeze scope by June 20. I'll also need to hire one more ML engineer.\nRahul: Approved. Arjun, loop in the 3 enterprise clients this week and get their feedback on the beta plan.\nArjun: Will do. Should we do a design review before scope freeze?\nMeera: Yes — let's schedule it for June 18th.\n\nAction items: Meera to prepare scope document by June 17. Design review June 18. Scope freeze June 20. Arjun to contact 3 enterprise clients by end of week. Rahul to open ML engineer headcount.\""
+    },
+    {
+      "prompt": "A prospect sent the following email after a product demo. Summarize their core ask, specific concerns, and implied timeline in 3-4 sentences:\n\n\"Hi team, Thank you for the demo on Thursday — the document processing pipeline was impressive, especially the accuracy on our legal contract format. Before we can move forward to procurement, we need a few things addressed. First, our InfoSec team requires SOC 2 Type II certification or a full security questionnaire response. Second, we process roughly 1.8 million documents per month at peak and need written SLA guarantees on uptime and throughput. Third, we'd need API sandbox access for our engineering team to test integration before signing. We're working toward a Q3 vendor decision so ideally we'd like responses within 2 weeks. Happy to set up a follow-up call.\""
+    },
+    {
+      "prompt": "Condense the following technical architecture document into a clear one-paragraph summary for a non-technical executive. Focus on what it does, why it matters, and what the business outcome is:\n\n\"System: Intelligent LLM Routing Layer v2. The system intercepts all LLM API calls made by the application layer and routes each request to the most appropriate model based on task type, cost, and quality requirements. Architecture: A three-component design — an embedding classifier that maps incoming prompts to one of six task categories using k-NN over pre-computed centroids, a routing policy engine that selects the default model per category based on benchmark-derived quality scores and cost, and a live scoring loop that monitors response quality in real time and escalates to a higher-capability model when the default falls below a quality threshold. Operational metrics: routing adds approximately 90ms of latency overhead. In simulations against historical traffic, the system reduces LLM API spend by 58-65% compared to always routing to GPT-4o, while maintaining quality within 3% of the all-GPT-4o baseline on 94% of requests.\""
+    },
+    {
+      "prompt": "Summarize the following user feedback from four enterprise clients into 3 clear themes. For each theme, note which users raised it:\n\n\"Client A (legal firm): The accuracy on contract review is excellent. Our main frustration is onboarding — it took our IT team 2 weeks to complete the integration because the API documentation has gaps, especially around authentication flows.\n\nClient B (financial services): Speed is acceptable. We need bulk processing — currently we have to write scripts to loop through documents. A native batch API would save us significant engineering time.\n\nClient C (healthcare): We're happy with the summarization quality. Two blockers for expanding usage: we need HIPAA Business Associate Agreement signed, and we need audit logs exported in a specific format our compliance team requires.\n\nClient D (consulting): The platform is solid but when something goes wrong the error messages are not actionable — just generic 500 errors. We spend too much time debugging integration issues. Also want webhook support so we don't have to poll for async job results.\""
+    },
+    {
+      "prompt": "Extract all action items from the following project sync, organized by owner and due date:\n\n\"Project Sync — LLM Eval Lab — June 7th.\n\nSriram: Finished the dispatcher module and judge pipeline this week. Starting on prompts.json today. Should be done by end of day. Still need to clean up main.py — targeting Monday.\n\nDivya: Dashboard mockups are 70% complete. Blocked on the final category list from Sriram — once I have that I can finish the strength profile tab. No hard deadline but want to sync with Sriram by Tuesday.\n\nKarthik: Supabase schema draft is ready for review. Needs sign-off from Sriram on the fields before I create the tables. Also need to set up GitHub Actions for the nightly cron job — planning to do that next week.\n\nRahul (CEO): Wants a live demo of the routing table output by June 20th. Asked everyone to flag blockers by June 10th at the latest so there's time to resolve them. He also mentioned the Tilicho investor meeting is June 25th and this project should be demoable by then.\n\nOpen risks: If main.py cleanup slips past Monday, it blocks Divya's dashboard work. Karthik's Supabase setup is on critical path for the live test tab.\""
+    }
+  ],
+
+  "business_writing": [
+    {
+      "prompt": "Write a one-page executive summary recommending that a mid-size enterprise software company adopt a multi-model LLM routing strategy rather than standardizing on a single vendor. Cover: the business rationale, estimated cost impact, quality tradeoffs, key risks, and your recommendation. Write for a CFO and CTO audience. Be specific and direct — no filler."
+    },
+    {
+      "prompt": "Draft a concise follow-up email to an enterprise prospect who attended a product demo 12 days ago and has not responded. The demo covered an AI document processing platform for legal firms. The prospect seemed engaged during the demo and asked detailed questions about accuracy on contract review. The email should be professional, add one piece of value (a relevant case study or insight), and include a clear call to action. Keep it under 150 words."
+    },
+    {
+      "prompt": "Write a clear, structured recommendation to a CTO deciding whether to build or buy an LLM evaluation framework. Cover the following: estimated cost to build (engineering time), cost to buy (vendor pricing), maintenance burden for each, speed to value, and your final recommendation with reasoning. Be direct — give a clear answer, not 'it depends.' Assume the company has a 5-person ML team and needs the framework running within 8 weeks."
+    },
+    {
+      "prompt": "Write a client-facing one-page explanation of how an AI model routing system works. The audience is a VP of Operations at a large enterprise — smart but not technical. Avoid jargon. Focus on three things: what the system does, why it saves money without sacrificing quality, and what the client experience looks like day-to-day. Use plain language and a clear structure."
+    },
+    {
+      "prompt": "Write a project proposal for a 4-week consulting engagement to help a retail enterprise integrate an AI platform into their existing customer support workflow. The client uses Zendesk for ticketing and has 50 support agents. Structure the proposal with: engagement objectives, week-by-week deliverables, what we need from the client, success metrics, and a brief risk section. Keep it tight — one page maximum."
+    }
+  ],
+
+  "agent_planning": [
+    {
+      "prompt": "Design a multi-agent workflow to automate customer support ticket handling end-to-end. Flow: user submits a ticket → system classifies urgency and category → drafts a response → checks the draft against company policy → either sends the response or escalates to a human agent. For each agent in the pipeline: name it, define its input and output, specify what model or tool it uses, and describe the handoff conditions. Include what happens when an agent fails."
+    },
+    {
+      "prompt": "Plan an AI monitoring agent that watches a company's Slack workspace for mentions of key enterprise accounts, aggregates sentiment across messages daily, and alerts the account management team when a monitored account shows a significant shift toward negative sentiment. Specify: what tools the agent needs, how it handles Slack's rate limits and pagination, the daily execution loop, the alerting threshold logic, and how false positives are managed."
+    },
+    {
+      "prompt": "Design an agent pipeline for processing RFP (Request for Proposal) documents received from prospective clients. The pipeline should: extract all stated requirements, match each requirement against a product capability database, flag unmet or partially met requirements, and produce a structured response outline with suggested content for each section. Describe each agent, their coordination mechanism, and how conflicts or ambiguous requirements are handled."
+    },
+    {
+      "prompt": "Design a self-improving benchmark agent for an LLM evaluation system. The agent runs a fixed prompt suite, scores model outputs, identifies the category with the lowest average score, generates 5 new challenging prompts for that category using an LLM, adds them to the benchmark suite, and re-runs evaluation. Specify: the control loop, how the agent decides when to stop generating new prompts, guardrails to prevent prompt quality degradation, and how results are stored across iterations."
+    },
+    {
+      "prompt": "Plan a multi-agent research assistant for a management consulting firm. Given a client question, the system should: one agent searches internal knowledge bases and the web for relevant information, a second agent synthesizes findings into a structured answer, a third agent fact-checks claims and flags unsupported statements, and a fourth agent formats the final response to match the firm's reporting style. Describe how agents communicate, what happens when the fact-checker contradicts the synthesizer, and how the system handles a question where insufficient information is found."
+    }
+  ]
+}

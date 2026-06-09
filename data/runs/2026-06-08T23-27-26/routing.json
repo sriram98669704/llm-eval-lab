@@ -1,0 +1,179 @@
+{
+  "generated_at": "2026-06-08T23:58:51.949896",
+  "policy": {
+    "architecture": {
+      "default": "deepseek-ai/DeepSeek-V4-Pro",
+      "escalate_to": "deepseek-ai/DeepSeek-V4-Pro",
+      "quality_bar": 0.8737,
+      "tolerance": 0.03,
+      "best_quality": 0.9037,
+      "selection": "cheapest",
+      "prompt_count": 3,
+      "models": {
+        "gpt-4o": {
+          "quality": 0.8293,
+          "cost_usd": 0.007668,
+          "latency": 9.2039,
+          "clears_bar": false
+        },
+        "claude-sonnet-4-5": {
+          "quality": 0.86,
+          "cost_usd": 0.061682,
+          "latency": 62.5196,
+          "clears_bar": false
+        },
+        "deepseek-ai/DeepSeek-V4-Pro": {
+          "quality": 0.9037,
+          "cost_usd": 0.008799,
+          "latency": 41.2843,
+          "clears_bar": true
+        }
+      }
+    },
+    "coding": {
+      "default": "deepseek-ai/DeepSeek-V4-Pro",
+      "escalate_to": "claude-sonnet-4-5",
+      "quality_bar": 0.8475,
+      "tolerance": 0.03,
+      "best_quality": 0.8775,
+      "selection": "cheapest",
+      "prompt_count": 3,
+      "models": {
+        "gpt-4o": {
+          "quality": 0.6808,
+          "cost_usd": 0.007841,
+          "latency": 9.4064,
+          "clears_bar": false
+        },
+        "claude-sonnet-4-5": {
+          "quality": 0.8775,
+          "cost_usd": 0.043237,
+          "latency": 35.9753,
+          "clears_bar": true
+        },
+        "deepseek-ai/DeepSeek-V4-Pro": {
+          "quality": 0.8733,
+          "cost_usd": 0.008406,
+          "latency": 40.2107,
+          "clears_bar": true
+        }
+      }
+    },
+    "debugging": {
+      "default": "claude-sonnet-4-5",
+      "escalate_to": "claude-sonnet-4-5",
+      "quality_bar": 0.8675,
+      "tolerance": 0.05,
+      "best_quality": 0.9175,
+      "selection": "cheapest",
+      "prompt_count": 3,
+      "models": {
+        "gpt-4o": {
+          "quality": 0.745,
+          "cost_usd": 0.006451,
+          "latency": 6.4126,
+          "clears_bar": false
+        },
+        "claude-sonnet-4-5": {
+          "quality": 0.9175,
+          "cost_usd": 0.047557,
+          "latency": 47.7529,
+          "clears_bar": true
+        },
+        "deepseek-ai/DeepSeek-V4-Pro": {
+          "quality": 0.8498,
+          "cost_usd": 0.008635,
+          "latency": 37.2206,
+          "clears_bar": false
+        }
+      }
+    },
+    "summarization": {
+      "default": "gpt-4o",
+      "escalate_to": "claude-sonnet-4-5",
+      "quality_bar": 0.945,
+      "tolerance": 0.05,
+      "best_quality": 0.995,
+      "selection": "fastest",
+      "prompt_count": 3,
+      "models": {
+        "gpt-4o": {
+          "quality": 0.9475,
+          "cost_usd": 0.001742,
+          "latency": 2.2525,
+          "clears_bar": true
+        },
+        "claude-sonnet-4-5": {
+          "quality": 0.995,
+          "cost_usd": 0.003429,
+          "latency": 6.1779,
+          "clears_bar": true
+        },
+        "deepseek-ai/DeepSeek-V4-Pro": {
+          "quality": 0.995,
+          "cost_usd": 0.000996,
+          "latency": 6.1722,
+          "clears_bar": true
+        }
+      }
+    },
+    "business_writing": {
+      "default": "deepseek-ai/DeepSeek-V4-Pro",
+      "escalate_to": "deepseek-ai/DeepSeek-V4-Pro",
+      "quality_bar": 0.8817,
+      "tolerance": 0.05,
+      "best_quality": 0.9317,
+      "selection": "cheapest",
+      "prompt_count": 3,
+      "models": {
+        "gpt-4o": {
+          "quality": 0.7175,
+          "cost_usd": 0.004248,
+          "latency": 6.2416,
+          "clears_bar": false
+        },
+        "claude-sonnet-4-5": {
+          "quality": 0.9075,
+          "cost_usd": 0.01368,
+          "latency": 24.1523,
+          "clears_bar": true
+        },
+        "deepseek-ai/DeepSeek-V4-Pro": {
+          "quality": 0.9317,
+          "cost_usd": 0.002716,
+          "latency": 16.5132,
+          "clears_bar": true
+        }
+      }
+    },
+    "agent_planning": {
+      "default": "deepseek-ai/DeepSeek-V4-Pro",
+      "escalate_to": "deepseek-ai/DeepSeek-V4-Pro",
+      "quality_bar": 0.875,
+      "tolerance": 0.05,
+      "best_quality": 0.925,
+      "selection": "cheapest",
+      "prompt_count": 3,
+      "models": {
+        "gpt-4o": {
+          "quality": 0.8363,
+          "cost_usd": 0.007327,
+          "latency": 10.5217,
+          "clears_bar": false
+        },
+        "claude-sonnet-4-5": {
+          "quality": 0.88,
+          "cost_usd": 0.061724,
+          "latency": 63.3401,
+          "clears_bar": true
+        },
+        "deepseek-ai/DeepSeek-V4-Pro": {
+          "quality": 0.925,
+          "cost_usd": 0.009313,
+          "latency": 48.1001,
+          "clears_bar": true
+        }
+      }
+    }
+  }
+}
