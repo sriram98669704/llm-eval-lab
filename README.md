@@ -157,7 +157,7 @@ The **Live Test** tab auto-detects the category from your prompt using k-nearest
 
 The Live Test tab makes real, paid API calls, so it needs keys. The security model is strict and deliberate:
 
-- Keys are entered once per browser session in the key panel — **never** committed, never in the repo.
+- Keys are entered once per browser session in the BYOK panel — **never** committed, never in the repo.
 - They live in **browser session memory only** — never written to disk, logs, or environment variables, and never shared between visitors.
 - They are passed as explicit function arguments straight to the provider SDKs and **never written to `os.environ`** (which is process-global and shared across sessions — writing a key there could leak it between visitors).
 - Anything key-shaped is **redacted** before it can ever reach the UI or a log, as defence-in-depth against provider errors that echo partial keys.
@@ -170,7 +170,7 @@ There are two separate places keys come from, for two separate jobs:
 - **Benchmark + local dev → `.env`.** The benchmark pipeline (`python main.py`, which runs the 30 prompts in `prompts.json` across all models) reads keys from a local `.env`. That's the offline batch job that produces the leaderboard and routing policy — it needs your keys on the machine running it.
 - **Deployed Live Test → BYOK.** The deployed app has no `.env`, so the Live Test tab uses bring-your-own-keys — each visitor's pasted keys, scoped to their own browser session.
 
-**Precedence is env-first.** If a local `.env` supplies all three keys, Live Test uses them directly and the paste panel stays hidden — convenient when you're developing locally and already have keys on hand. The panel only appears when the environment isn't *fully* populated: the app checks whether all three keys are present, so to see the BYOK panel on your own machine you can either delete `.env` entirely, or simply remove one provider's line from it (e.g. drop `TOGETHER_API_KEY`) — a single missing key flips it to BYOK mode. Either way, keys are only ever *read* — never written to disk, logs, or `os.environ`.
+**Precedence is env-first.** If a local `.env` supplies all three keys, Live Test uses them directly and the BYOK panel stays hidden — convenient when you're developing locally and already have keys on hand. It only appears when the environment isn't *fully* populated: the app checks whether all three keys are present, so to see the BYOK panel on your own machine you can either delete `.env` entirely, or simply remove one provider's line from it (e.g. drop `TOGETHER_API_KEY`) — a single missing key flips it to BYOK mode. Either way, keys are only ever *read* — never written to disk, logs, or `os.environ`.
 
 The four read-only tabs (Leaderboard, Eval, Benchmark, Routing) need no keys at all — they run entirely off the pre-computed benchmark data. Key resolution is pure, side-effect-free, and covered by [`tests/test_byok.py`](tests/test_byok.py), including an explicit assertion that `os.environ` is never mutated.
 
@@ -181,7 +181,7 @@ The four read-only tabs (Leaderboard, Eval, Benchmark, Routing) need no keys at 
 ### Prerequisites
 
 - Python 3.9+
-- API keys: OpenAI, Anthropic, Together AI
+- API keys: OpenAI, Anthropic, and Together AI (for DeepSeek)
 
 ### Install
 
