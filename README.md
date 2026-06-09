@@ -22,7 +22,7 @@ streamlit run dashboard.py      # explore results + run live prompts
 - **Leave-one-out jury** — every response graded by the other two models, never by itself
 - **Quality-driven routing** — one default + one escalation target derived per category
 - **Live Test** — route any prompt in real time, with live grading and automatic escalation
-- **150 unit tests**, zero API calls — scoring math, parsing, routing, and key-handling are all verified offline
+- **150 unit tests** — the *test suite* runs fully offline (the benchmark and Live Test make real API calls; the tests don't), covering scoring math, parsing, routing, and key-handling
 
 ---
 
@@ -214,7 +214,7 @@ streamlit run dashboard.py
 pytest tests/
 ```
 
-150 tests, no API calls. Covers scoring math, judge output parsing, SDK routing, routing-table derivation, BYOK key resolution, and security invariants.
+150 tests. The test suite runs fully offline — no API calls, no keys needed — so it's fast and free to run. Covers scoring math, judge output parsing, SDK routing, routing-table derivation, BYOK key resolution, and security invariants. (The benchmark pipeline and Live Test do make real API calls — these tests verify the logic around them.)
 
 ---
 
