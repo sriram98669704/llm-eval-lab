@@ -1,0 +1,250 @@
+{
+  "run_at": "2026-06-10T02:13:51.839880",
+  "judge_models": [
+    "gpt-4o",
+    "claude-sonnet-4-5",
+    "deepseek-ai/DeepSeek-V4-Pro"
+  ],
+  "models": {
+    "gpt-4o": {
+      "final_score": 0.8068,
+      "avg_latency": 6.692800370766666,
+      "avg_judge": {
+        "correctness": 0.7908333333333334,
+        "reasoning": 0.7803333333333334,
+        "clarity": 0.8788333333333335,
+        "hallucination_free": 0.8475
+      },
+      "category_scores": {
+        "architecture": 0.8204,
+        "coding": 0.702,
+        "debugging": 0.7405,
+        "summarization": 0.923,
+        "business_writing": 0.8195,
+        "agent_planning": 0.8352
+      },
+      "category_score_stds": {
+        "architecture": 0.0396,
+        "coding": 0.1141,
+        "debugging": 0.1846,
+        "summarization": 0.067,
+        "business_writing": 0.064,
+        "agent_planning": 0.0205
+      },
+      "category_latencies": {
+        "architecture": 9.097869774800001,
+        "coding": 7.4799735502,
+        "debugging": 7.486797041799997,
+        "summarization": 2.0962887496000064,
+        "business_writing": 5.938405466400008,
+        "agent_planning": 8.057467641799985
+      },
+      "category_costs": {
+        "architecture": 0.007799,
+        "coding": 0.00769,
+        "debugging": 0.006466,
+        "summarization": 0.001961,
+        "business_writing": 0.004686,
+        "agent_planning": 0.007354
+      },
+      "category_judge_scores": {
+        "architecture": {
+          "correctness": 0.8099999999999999,
+          "reasoning": 0.786,
+          "clarity": 0.884,
+          "hallucination_free": 0.9099999999999999
+        },
+        "coding": {
+          "correctness": 0.6950000000000001,
+          "reasoning": 0.675,
+          "clarity": 0.825,
+          "hallucination_free": 0.78
+        },
+        "debugging": {
+          "correctness": 0.71,
+          "reasoning": 0.75,
+          "clarity": 0.8550000000000001,
+          "hallucination_free": 0.7649999999999999
+        },
+        "summarization": {
+          "correctness": 0.905,
+          "reasoning": 0.9,
+          "clarity": 0.9350000000000002,
+          "hallucination_free": 0.925
+        },
+        "business_writing": {
+          "correctness": 0.7900000000000001,
+          "reasoning": 0.7649999999999999,
+          "clarity": 0.8800000000000001,
+          "hallucination_free": 0.775
+        },
+        "agent_planning": {
+          "correctness": 0.8350000000000002,
+          "reasoning": 0.806,
+          "clarity": 0.8940000000000001,
+          "hallucination_free": 0.93
+        }
+      }
+    },
+    "claude-sonnet-4-5": {
+      "final_score": 0.9089,
+      "avg_latency": 36.25976890556668,
+      "avg_judge": {
+        "correctness": 0.9016666666666667,
+        "reasoning": 0.9,
+        "clarity": 0.9375,
+        "hallucination_free": 0.92
+      },
+      "category_scores": {
+        "architecture": 0.875,
+        "coding": 0.901,
+        "debugging": 0.903,
+        "summarization": 0.965,
+        "business_writing": 0.9315,
+        "agent_planning": 0.878
+      },
+      "category_score_stds": {
+        "architecture": 0.0228,
+        "coding": 0.0433,
+        "debugging": 0.0317,
+        "summarization": 0.0329,
+        "business_writing": 0.0162,
+        "agent_planning": 0.0336
+      },
+      "category_latencies": {
+        "architecture": 54.7588966082,
+        "coding": 33.21846231700006,
+        "debugging": 45.27144852480001,
+        "summarization": 6.245440408400009,
+        "business_writing": 20.756696891599994,
+        "agent_planning": 57.30766868340002
+      },
+      "category_costs": {
+        "architecture": 0.061688,
+        "coding": 0.039349,
+        "debugging": 0.04696,
+        "summarization": 0.004327,
+        "business_writing": 0.011695,
+        "agent_planning": 0.055487
+      },
+      "category_judge_scores": {
+        "architecture": {
+          "correctness": 0.8700000000000001,
+          "reasoning": 0.8700000000000001,
+          "clarity": 0.915,
+          "hallucination_free": 0.8950000000000001
+        },
+        "coding": {
+          "correctness": 0.9,
+          "reasoning": 0.89,
+          "clarity": 0.9399999999999998,
+          "hallucination_free": 0.93
+        },
+        "debugging": {
+          "correctness": 0.9,
+          "reasoning": 0.9,
+          "clarity": 0.93,
+          "hallucination_free": 0.9199999999999999
+        },
+        "summarization": {
+          "correctness": 0.95,
+          "reasoning": 0.95,
+          "clarity": 0.9800000000000001,
+          "hallucination_free": 0.9600000000000002
+        },
+        "business_writing": {
+          "correctness": 0.9200000000000002,
+          "reasoning": 0.9200000000000002,
+          "clarity": 0.95,
+          "hallucination_free": 0.915
+        },
+        "agent_planning": {
+          "correctness": 0.8700000000000001,
+          "reasoning": 0.8700000000000001,
+          "clarity": 0.9099999999999999,
+          "hallucination_free": 0.9
+        }
+      }
+    },
+    "deepseek-ai/DeepSeek-V4-Pro": {
+      "final_score": 0.9151,
+      "avg_latency": 34.05981051807504,
+      "avg_judge": {
+        "correctness": 0.9122916666666666,
+        "reasoning": 0.9110416666666667,
+        "clarity": 0.9370833333333333,
+        "hallucination_free": 0.8972916666666668
+      },
+      "category_scores": {
+        "architecture": 0.898,
+        "coding": 0.87,
+        "debugging": 0.8906,
+        "summarization": 0.9635,
+        "business_writing": 0.9475,
+        "agent_planning": 0.921
+      },
+      "category_score_stds": {
+        "architecture": 0.006,
+        "coding": 0.0338,
+        "debugging": 0.067,
+        "summarization": 0.0586,
+        "business_writing": 0.0298,
+        "agent_planning": 0.008
+      },
+      "category_latencies": {
+        "architecture": 77.3694378585999,
+        "coding": 33.1547355918,
+        "debugging": 44.93315554125013,
+        "summarization": 9.620952107999893,
+        "business_writing": 5.869416175400147,
+        "agent_planning": 33.411165833400176
+      },
+      "category_costs": {
+        "architecture": 0.008262,
+        "coding": 0.008377,
+        "debugging": 0.007354,
+        "summarization": 0.001247,
+        "business_writing": 0.002585,
+        "agent_planning": 0.008345
+      },
+      "category_judge_scores": {
+        "architecture": {
+          "correctness": 0.9,
+          "reasoning": 0.905,
+          "clarity": 0.925,
+          "hallucination_free": 0.8800000000000001
+        },
+        "coding": {
+          "correctness": 0.865,
+          "reasoning": 0.865,
+          "clarity": 0.915,
+          "hallucination_free": 0.875
+        },
+        "debugging": {
+          "correctness": 0.8937499999999999,
+          "reasoning": 0.88125,
+          "clarity": 0.9125,
+          "hallucination_free": 0.86875
+        },
+        "summarization": {
+          "correctness": 0.9550000000000001,
+          "reasoning": 0.9550000000000001,
+          "clarity": 0.9800000000000001,
+          "hallucination_free": 0.95
+        },
+        "business_writing": {
+          "correctness": 0.9400000000000001,
+          "reasoning": 0.9400000000000001,
+          "clarity": 0.9649999999999999,
+          "hallucination_free": 0.915
+        },
+        "agent_planning": {
+          "correctness": 0.9200000000000002,
+          "reasoning": 0.9200000000000002,
+          "clarity": 0.925,
+          "hallucination_free": 0.8950000000000001
+        }
+      }
+    }
+  }
+}

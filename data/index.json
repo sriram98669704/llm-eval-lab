@@ -1,25 +1,25 @@
 {
   "runs": [
     {
-      "id": "2026-06-08T23-27-26",
-      "started_at": "2026-06-08T23:27:26.639274",
-      "finished_at": "2026-06-08T23:58:51.954550",
-      "duration_seconds": 1885.3,
-      "git_sha": "6ea331d",
+      "id": "2026-06-10T01-15-22",
+      "started_at": "2026-06-10T01:15:22.666946",
+      "finished_at": "2026-06-10T02:13:51.842707",
+      "duration_seconds": 3509.2,
+      "git_sha": "6275a1a",
       "git_dirty": true,
-      "run_fingerprint": "645231dc46dba625",
+      "run_fingerprint": "fb81a5b261011483",
       "models": [
         "gpt-4o",
         "claude-sonnet-4-5",
         "deepseek-ai/DeepSeek-V4-Pro"
       ],
       "prompt_counts": {
-        "architecture": 3,
-        "coding": 3,
-        "debugging": 3,
-        "summarization": 3,
-        "business_writing": 3,
-        "agent_planning": 3
+        "architecture": 5,
+        "coding": 5,
+        "debugging": 5,
+        "summarization": 5,
+        "business_writing": 5,
+        "agent_planning": 5
       }
     }
   ]

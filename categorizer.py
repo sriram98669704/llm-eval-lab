@@ -34,7 +34,7 @@ def _average_vectors(vectors):
     return avg
 
 
-def build_fingerprints():
+def build_fingerprints(api_key=None):
     """
     Embed all 30 known prompts (5 per category) and average them into 6
     fingerprint vectors — one per category.
@@ -59,7 +59,7 @@ def build_fingerprints():
         all_prompts.extend(cat_prompts)
         order.append((category, len(cat_prompts)))
 
-    all_vectors = embed(all_prompts)  # one API call, returns list of vectors
+    all_vectors = embed(all_prompts, api_key=api_key)  # one API call, returns list of vectors
 
     fingerprints = {}
     idx = 0
@@ -69,7 +69,7 @@ def build_fingerprints():
     return fingerprints
 
 
-def categorize(prompt, fingerprints):
+def categorize(prompt, fingerprints, api_key=None):
     """
     Embed the prompt and return the nearest category by cosine similarity.
 
@@ -81,7 +81,7 @@ def categorize(prompt, fingerprints):
         (category, score) where category is one of the 6 CATEGORIES strings
         and score is the cosine similarity (0–1, higher = more confident).
     """
-    vec = embed(prompt)
+    vec = embed(prompt, api_key=api_key)
     best_cat = None
     best_score = -1.0
     for category, fingerprint in fingerprints.items():

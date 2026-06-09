@@ -22,6 +22,7 @@ Run with:  streamlit run dashboard.py
 """
 
 import json
+import os
 import pathlib
 import streamlit as st
 import pandas as pd
@@ -31,6 +32,7 @@ from config import CATEGORIES, JUDGE_FAILURE_THRESHOLD
 from storage import latest_run_dir
 from findings import compute_findings
 from report import generate_report
+from byok import keys_from_env, resolve_keys, redact, PROVIDERS
 
 # ─────────────────────────────────────────────────────────
 # PAGE CONFIG
@@ -1152,7 +1154,7 @@ if active == "⚡ Live Test":
     )
 
     st.info(
-        "**This tab makes live API calls** using the keys in your `.env` file.  \n"
+        "**This tab makes live API calls.**  \n"
         "Each run costs roughly **$0.01–$0.05** depending on prompt length "
         "and whether escalation triggers (escalation doubles the model call count).  \n"
         "Run `python main.py` first so there is a routing policy to use."
@@ -1168,6 +1170,83 @@ if active == "⚡ Live Test":
         # it runs, every control is disabled so the inputs can't change mid-flight
         # — the canonical Streamlit way to "freeze the form while busy", not a hack.
         running = st.session_state.get("live_running", False)
+
+        # ── BYOK key panel — env-first, then per-session pasted keys ──────────
+        # Pasted keys live ONLY in st.session_state (per-session server RAM) —
+        # never written to os.environ, disk, or logs. Resolved fresh each run so
+        # the Run-button gating below reflects what's currently entered. The
+        # resolved dict is forwarded explicitly to every model + jury call; see
+        # byok.py for the full security model.
+        _env_keys = keys_from_env(os.environ)
+
+        if all(_env_keys.values()):
+            st.caption(
+                "🔑 Using API keys from your local environment — sent only to the "
+                "model providers, never stored or logged."
+            )
+        else:
+            _already = all(
+                (st.session_state.get(f"byok_saved_{_p}") or "").strip()
+                for _p in PROVIDERS
+            )
+            with st.expander(
+                "🔑 Your API keys — "
+                + ("✅ set for this session" if _already else "⚠️ paste to run a live test"),
+                expanded=not _already and not running,
+            ):
+                st.caption(
+                    "Live Test calls the model providers directly with **your** keys. "
+                    "They're held **in memory for this browser session only** — never written "
+                    "to disk, never logged, never shared — and gone when you close the tab. "
+                    "All three are needed: the answer model plus the two graders that score it."
+                )
+                _labels = {
+                    "openai":    "OpenAI key  (sk-…)",
+                    "anthropic": "Anthropic key  (sk-ant-…)",
+                    "together":  "Together.ai key  (used for DeepSeek)",
+                }
+
+                _gen = st.session_state.get("byok_gen", 0)
+
+                def _save_key(p):
+                    val = st.session_state.get(f"byok_input_{p}_{_gen}", "")
+                    if val:
+                        st.session_state[f"byok_saved_{p}"] = val
+
+                for _p in PROVIDERS:
+                    _wkey = f"byok_input_{_p}_{_gen}"
+                    if _wkey not in st.session_state and f"byok_saved_{_p}" in st.session_state:
+                        st.session_state[_wkey] = st.session_state[f"byok_saved_{_p}"]
+                    st.text_input(
+                        _labels[_p],
+                        type="password",
+                        key=_wkey,
+                        disabled=running,
+                        help="Held in memory for this session only — never stored or logged.",
+                        on_change=_save_key,
+                        args=(_p,),
+                    )
+                if st.button("🧹 Clear keys", disabled=running, key="byok_clear"):
+                    new_gen = _gen + 1
+                    for _p in PROVIDERS:
+                        # wipe all generations of the widget key just in case
+                        for _g in range(new_gen + 1):
+                            st.session_state.pop(f"byok_input_{_p}_{_g}", None)
+                        st.session_state.pop(f"byok_saved_{_p}", None)
+                    st.session_state["byok_gen"] = new_gen
+                    st.rerun()
+
+        # Resolve which keys to use (env-first). resolve_keys never writes os.environ.
+        _cur_gen = st.session_state.get("byok_gen", 0)
+        _session_keys = {
+            _p: (
+                st.session_state.get(f"byok_input_{_p}_{_cur_gen}", "")
+                or st.session_state.get(f"byok_saved_{_p}", "")
+                or ""
+            ).strip() or None
+            for _p in PROVIDERS
+        }
+        live_keys, key_source, missing_keys = resolve_keys(_env_keys, _session_keys)
 
         col_left, col_right = st.columns([1, 2])
 
@@ -1199,7 +1278,12 @@ if active == "⚡ Live Test":
                 )
             else:
                 live_category_manual = None
-            run_btn = st.button("▶  Run", width="stretch", type="primary", key="live_run_btn", disabled=running)
+            run_btn = st.button(
+                "▶  Run", width="stretch", type="primary", key="live_run_btn",
+                disabled=running or bool(missing_keys),
+            )
+            if missing_keys and not running:
+                st.caption("⚠️ Paste your API keys above to enable Run.")
 
         # Save prompt text per mode so it disappears on switch and reappears on
         # return — consistent with how the results and live trace behave. We
@@ -1267,10 +1351,10 @@ if active == "⚡ Live Test":
                         from categorizer import build_fingerprints, categorize
                         if "fingerprints" not in st.session_state:
                             _step("📐 Embedding 30 known prompts to build category fingerprints — one-time setup, cached for the rest of this session…")
-                            st.session_state["fingerprints"] = build_fingerprints()
+                            st.session_state["fingerprints"] = build_fingerprints(api_key=live_keys["openai"])
                         _step("🔍 Embedding your prompt into vector space and comparing it against all 6 category fingerprints to find the closest match…")
                         live_category, knn_score = categorize(
-                            p_prompt, st.session_state["fingerprints"]
+                            p_prompt, st.session_state["fingerprints"], api_key=live_keys["openai"]
                         )
                         record["knn_result"] = (live_category, knn_score)
                         _step(f"✅ Closest match: **{live_category}** — cosine similarity {knn_score:.2f} out of 1.0. Routing this as a {live_category} task.")
@@ -1278,7 +1362,7 @@ if active == "⚡ Live Test":
                         live_category = p_manual
                         _step(f"📋 Category manually set to **{live_category}** — skipping auto-detection and routing directly.")
 
-                    trace = _run_live(p_prompt, live_category, status_callback=_step)
+                    trace = _run_live(p_prompt, live_category, status_callback=_step, keys=live_keys)
                     record["trace"] = trace
 
                     if trace is None:
@@ -1293,7 +1377,7 @@ if active == "⚡ Live Test":
                         status.update(label=f"✅ Done — routed to {trace.get('final_model')}", state="complete")
 
             except Exception as exc:
-                record["trace"] = {"error": "exception", "message": str(exc)}
+                record["trace"] = {"error": "exception", "message": redact(str(exc))}
 
             # Persist under the mode that produced it, clear the running flag, and
             # rerun so the controls come back enabled and PASS 3 shows the result.
@@ -1335,7 +1419,7 @@ if active == "⚡ Live Test":
                 elif trace.get("error") == "default_call_failed":
                     st.error(
                         f"The default model (`{trace.get('default_model')}`) failed to respond.  \n"
-                        "Check your API keys in `.env` and try again."
+                        "Check that your API keys are valid and try again."
                     )
                 else:
                     escalated   = trace.get("escalated", False)

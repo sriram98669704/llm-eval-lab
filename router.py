@@ -210,7 +210,7 @@ def derive_routing_table(results, prompt_counts=None):
 # -----------------------------
 # LIVE RUN (apply the policy to one real prompt, escalating only if needed)
 # -----------------------------
-def _run_and_score(model, prompt, category):
+def _run_and_score(model, prompt, category, keys=None):
     """
     Call ONE model on a live prompt, judge it with the live leave-one-out jury,
     and score that single response's quality using the category's weights.
@@ -225,11 +225,11 @@ def _run_and_score(model, prompt, category):
             succeeded, so we keep the response but have no live score).
         None if the model call itself failed entirely (no response at all).
     """
-    call = call_model(model, prompt)
+    call = call_model(model, prompt, keys=keys)
     if call is None:
         return None  # the model never answered — caller decides what to do
 
-    judge = judge_response(prompt, call["text"], model)
+    judge = judge_response(prompt, call["text"], model, keys=keys)
     if judge is None:
         quality        = None  # we have a response but couldn't score it
         judge_cost_usd = 0.0   # no successful judge calls to attribute
@@ -298,7 +298,7 @@ def _emit(callback, message):
         pass
 
 
-def run_live(prompt, category, policy=None, status_callback=None):
+def run_live(prompt, category, policy=None, status_callback=None, keys=None):
     """
     Apply the routing policy to ONE live prompt — the live counterpart to
     derive_routing_table(). The offline table decides the policy; this applies it.
@@ -336,6 +336,10 @@ def run_live(prompt, category, policy=None, status_callback=None):
                   model call, live score, escalation decision, escalated call).
                   Lets a UI show a truly live step-by-step trace. Best-effort —
                   errors in the callback never affect the run. Default None.
+        keys:     optional per-session BYOK keys
+                  {"openai": ..., "anthropic": ..., "together": ...} forwarded
+                  down to every model and jury call (see dispatcher.call_model).
+                  Default None → falls back to the environment (.env / local).
 
     Returns:
         trace dict (see code), or None if the category has no policy.
@@ -362,7 +366,7 @@ def run_live(prompt, category, policy=None, status_callback=None):
 
     # --- 1. Run + judge + score the DEFAULT model ---
     _emit(status_callback, f"⚡ Calling **{default_model}** — the benchmark's recommended model for **{category}** tasks. Two independent graders will score the response…")
-    default_result = _run_and_score(default_model, prompt, category)
+    default_result = _run_and_score(default_model, prompt, category, keys=keys)
     if default_result is None:
         # The default model never answered — nothing to return, fail honestly.
         _emit(status_callback, f"❌ **{default_model}** failed to respond after retries — nothing to return.")
@@ -433,7 +437,7 @@ def run_live(prompt, category, policy=None, status_callback=None):
 
     # (d) Below bar and a higher-quality model exists -> escalate.
     _emit(status_callback, f"⚠️ **{default_quality:.2f}** fell below the bar of **{quality_bar:.2f}** — escalating to **{escalate_to}** for a stronger answer…")
-    escalated_result = _run_and_score(escalate_to, prompt, category)
+    escalated_result = _run_and_score(escalate_to, prompt, category, keys=keys)
     if escalated_result is None:
         # Escalation target failed — fall back to the default response, flagged.
         trace["reason"] = "below bar; escalation target failed — returning default"

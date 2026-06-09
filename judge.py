@@ -132,15 +132,18 @@ def parse_judge_json(content):
 # -----------------------------
 # SINGLE JUDGE, SINGLE ATTEMPT
 # -----------------------------
-def _judge_once(judge_model, prompt, response):
+def _judge_once(judge_model, prompt, response, keys=None):
     """
     One attempt with one judge model via dispatcher.
     Returns (scores, raw, cost_usd) on success, raises on any failure.
     cost_usd is the dispatcher's cost for this judge call (None if unpriced).
+
+    keys: optional per-session BYOK keys, forwarded to call_model (see dispatcher).
     """
     result = call_model(
         judge_model,
-        f"System: {JUDGE_SYSTEM_PROMPT}\n\nPrompt:\n{prompt}\n\nResponse:\n{response}"
+        f"System: {JUDGE_SYSTEM_PROMPT}\n\nPrompt:\n{prompt}\n\nResponse:\n{response}",
+        keys=keys,
     )
 
     if result is None:
@@ -158,7 +161,7 @@ def _judge_once(judge_model, prompt, response):
 # -----------------------------
 # JURY: LEAVE-ONE-OUT
 # -----------------------------
-def _call_jury(prompt, response, contestant_model):
+def _call_jury(prompt, response, contestant_model, keys=None):
     """
     Call all judges except the one from the same family as the contestant.
     Each judge retried once on failure.
@@ -177,7 +180,7 @@ def _call_jury(prompt, response, contestant_model):
 
         for attempt in range(2):
             try:
-                scores, raw, cost = _judge_once(judge_model, prompt, response)
+                scores, raw, cost = _judge_once(judge_model, prompt, response, keys=keys)
                 results.append((judge_model, scores, raw, cost))
                 break  # success — move to next judge
             except Exception as e:
@@ -189,7 +192,7 @@ def _call_jury(prompt, response, contestant_model):
 # -----------------------------
 # PUBLIC API
 # -----------------------------
-def judge_response(prompt, response, contestant_model):
+def judge_response(prompt, response, contestant_model, keys=None):
     """
     Score a response using leave-one-out jury.
     Skips the judge from the same family as the contestant.
@@ -199,6 +202,7 @@ def judge_response(prompt, response, contestant_model):
         prompt:           the original prompt
         response:         the contestant's response
         contestant_model: name of the model being judged (used to skip sibling)
+        keys:             optional per-session BYOK keys (forwarded to call_model)
 
     Returns:
         On success: {
@@ -210,7 +214,7 @@ def judge_response(prompt, response, contestant_model):
         }
         On total failure (both judges fail): None
     """
-    jury_results = _call_jury(prompt, response, contestant_model)
+    jury_results = _call_jury(prompt, response, contestant_model, keys=keys)
 
     if not jury_results:
         print(f"[judge] All jury members failed for {contestant_model} — returning None")

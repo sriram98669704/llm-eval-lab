@@ -44,9 +44,9 @@ logger = logging.getLogger(__name__)
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True
 )
-def _call_openai(model, prompt):
+def _call_openai(model, prompt, api_key=None):
     from openai import OpenAI
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
 
     start = time.perf_counter()
     response = client.chat.completions.create(
@@ -74,9 +74,9 @@ def _call_openai(model, prompt):
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True
 )
-def _call_anthropic(model, prompt):
+def _call_anthropic(model, prompt, api_key=None):
     import anthropic
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    client = anthropic.Anthropic(api_key=api_key or os.getenv("ANTHROPIC_API_KEY"))
 
     start = time.perf_counter()
     response = client.messages.create(
@@ -104,9 +104,9 @@ def _call_anthropic(model, prompt):
     before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True
 )
-def _call_together(model, prompt):
+def _call_together(model, prompt, api_key=None):
     from together import Together
-    client = Together(api_key=os.getenv("TOGETHER_API_KEY"))
+    client = Together(api_key=api_key or os.getenv("TOGETHER_API_KEY"))
 
     start = time.perf_counter()
     response = client.chat.completions.create(
@@ -134,7 +134,7 @@ def _call_together(model, prompt):
     wait=wait_exponential(multiplier=2, min=4, max=60),
     reraise=True
 )
-def embed(text):
+def embed(text, api_key=None):
     """
     Get vector embedding(s) using text-embedding-3-small.
 
@@ -150,7 +150,7 @@ def embed(text):
     """
     from openai import OpenAI
     from config import EMBEDDING_MODEL
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
 
     response = client.embeddings.create(
         model=EMBEDDING_MODEL,
@@ -164,19 +164,27 @@ def embed(text):
 # -----------------------------
 # MAIN ENTRY POINT
 # -----------------------------
-def call_model(model, prompt):
+def call_model(model, prompt, keys=None):
     """
     Route a prompt to the correct SDK based on model name prefix.
     Each SDK call is retried up to 3 times with exponential backoff.
     Returns standard dict on success, None on total failure.
+
+    keys: optional {"openai": ..., "anthropic": ..., "together": ...} of
+          per-session API keys (BYOK). When a provider's key is supplied it is
+          passed EXPLICITLY to that SDK client; when absent the call falls back
+          to the process environment (.env / local run). Keys are never written
+          to os.environ, so one user session's key can never leak into another's
+          — see dashboard.py Live Test (BYOK).
     """
+    keys = keys or {}
     try:
         if model.startswith("gpt-"):
-            result = _call_openai(model, prompt)
+            result = _call_openai(model, prompt, api_key=keys.get("openai"))
         elif model.startswith("claude-"):
-            result = _call_anthropic(model, prompt)
+            result = _call_anthropic(model, prompt, api_key=keys.get("anthropic"))
         elif model.startswith("deepseek-ai/"):
-            result = _call_together(model, prompt)
+            result = _call_together(model, prompt, api_key=keys.get("together"))
         else:
             raise ValueError(f"Unknown model prefix: {model}")
 
