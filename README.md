@@ -237,10 +237,29 @@ result = route("coding")
 # → {"model": "claude-sonnet-4-5", "why": "...", "escalate_to": "claude-sonnet-4-5"}
 ```
 
+**Fixed category** — you know the task type upfront:
 ```python
 from router import run_live
 
 trace = run_live("Write a FastAPI endpoint that validates a webhook payload.", "coding")
+print(trace["final_response"])
+print(f"Cost: ${trace['total_cost_usd']:.4f}")
+```
+
+**Auto-detect category** — same flow the dashboard uses (requires an OpenAI key for embeddings):
+```python
+from categorizer import build_fingerprints, categorize
+from router import run_live
+
+prompt = "Write a FastAPI endpoint that validates a webhook payload."
+
+# Build once, reuse across multiple prompts
+fingerprints = build_fingerprints()
+category, confidence = categorize(prompt, fingerprints)
+# → ("coding", 0.87)
+
+trace = run_live(prompt, category)
+print(f"Category: {category} (confidence: {confidence:.2f})")
 print(trace["final_response"])
 print(f"Cost: ${trace['total_cost_usd']:.4f}")
 ```
