@@ -190,3 +190,26 @@ class TestRedact:
         out = redact(err)
         assert "sk-proj-AbCd1234EfGh5678" not in out
         assert "Incorrect API key provided" in out  # the human part survives
+
+    def test_redacts_bare_hex_together_key(self):
+        # Legacy Together AI keys are bare 64-char hex — no tgp_ prefix.
+        key = "a1b2c3d4" * 8  # 64 hex chars
+        out = redact(f"invalid api key: {key}")
+        assert key not in out
+        assert "redacted" in out
+
+    def test_redacts_uppercase_hex_key(self):
+        key = "A1B2C3D4" * 8
+        out = redact(f"invalid api key: {key}")
+        assert key not in out
+
+    def test_leaves_short_hex_alone(self):
+        # A git SHA (40 hex chars) is not key-shaped — must survive.
+        sha = "f" * 40
+        msg = f"deployed commit {sha}"
+        assert redact(msg) == msg
+
+    def test_leaves_hex_inside_longer_token_alone(self):
+        # 64 hex chars embedded in a longer word ≠ a key boundary.
+        msg = "id_" + "a" * 64 + "z"
+        assert redact(msg) == msg

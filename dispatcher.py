@@ -25,8 +25,9 @@ Returned dict from call_model():
 import os
 import time
 from dotenv import load_dotenv
-from tenacity import retry, stop_after_attempt, wait_exponential, before_sleep_log
+from tenacity import retry, stop_after_attempt, wait_exponential
 import logging
+from byok import redact
 from pricing import calculate_cost
 from config import MAX_OUTPUT_TOKENS
 
@@ -35,13 +36,28 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 
+def _log_retry(retry_state):
+    """
+    tenacity before_sleep hook. Logs each retry with the exception text passed
+    through redact() — provider auth errors can echo key fragments, and retry
+    logs land in server stdout (e.g. Streamlit Cloud logs), so they get the
+    same redaction as the UI path.
+    """
+    exc = retry_state.outcome.exception() if retry_state.outcome else None
+    fn = retry_state.fn.__name__ if retry_state.fn else "call"
+    logger.warning(
+        "Retrying %s (attempt %d) after error: %s",
+        fn, retry_state.attempt_number, redact(str(exc)),
+    )
+
+
 # -----------------------------
 # OPENAI
 # -----------------------------
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=2, min=4, max=60),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
+    before_sleep=_log_retry,
     reraise=True
 )
 def _call_openai(model, prompt, api_key=None):
@@ -71,7 +87,7 @@ def _call_openai(model, prompt, api_key=None):
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=2, min=4, max=60),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
+    before_sleep=_log_retry,
     reraise=True
 )
 def _call_anthropic(model, prompt, api_key=None):
@@ -101,7 +117,7 @@ def _call_anthropic(model, prompt, api_key=None):
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=2, min=4, max=60),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
+    before_sleep=_log_retry,
     reraise=True
 )
 def _call_together(model, prompt, api_key=None):
@@ -196,5 +212,7 @@ def call_model(model, prompt, keys=None):
         return result
 
     except Exception as e:
-        print(f"[dispatcher] {model} failed after all retries: {e}")
+        # redact() the exception text — this print reaches server stdout
+        # (Streamlit Cloud logs), and provider errors can echo key fragments.
+        print(f"[dispatcher] {model} failed after all retries: {redact(str(e))}")
         return None

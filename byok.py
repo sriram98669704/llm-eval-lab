@@ -95,8 +95,13 @@ def validate_key_format(provider: str, key: str | None) -> tuple[bool, str]:
 
 
 # Order matters: match the more specific 'sk-ant-' before the generic 'sk-'.
+# The bare 64-char hex alternative covers legacy Together AI keys, which have
+# no prefix. It can also mask an unrelated hex digest (e.g. a SHA-256) that
+# happens to appear in an error message — acceptable: over-masking is harmless,
+# under-masking is not.
 _KEY_RE = re.compile(
-    r"(sk-ant-[A-Za-z0-9_\-]{6,}|sk-[A-Za-z0-9_\-]{6,}|tgp_[A-Za-z0-9_\-]{6,})"
+    r"(sk-ant-[A-Za-z0-9_\-]{6,}|sk-[A-Za-z0-9_\-]{6,}|tgp_[A-Za-z0-9_\-]{6,}"
+    r"|\b[A-Fa-f0-9]{64}\b)"
 )
 
 

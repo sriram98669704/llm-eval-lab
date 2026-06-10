@@ -1,6 +1,6 @@
 # LLM Eval Lab
 
-![Python](https://img.shields.io/badge/python-3.9%2B-blue) ![Tests](https://img.shields.io/badge/tests-150%20passing-brightgreen) ![No API calls in tests](https://img.shields.io/badge/test%20suite-offline-lightgrey) ![Built with Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue) ![Tests](https://img.shields.io/badge/tests-154%20passing-brightgreen) ![No API calls in tests](https://img.shields.io/badge/test%20suite-offline-lightgrey) ![Built with Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)
 
 **Which model should we use for which task — and when should we automatically upgrade to a better one?**
 
@@ -22,7 +22,7 @@ streamlit run dashboard.py      # explore results + run live prompts
 - **Leave-one-out jury** — every response graded by the other two models, never by itself
 - **Quality-driven routing** — one default + one escalation target derived per category
 - **Live Test** — put the routing policy to the test on *your own* prompt: it picks the model, grades the answer live, and escalates if quality falls short
-- **150 unit tests** — the *test suite* runs fully offline (the benchmark and Live Test make real API calls; the tests don't), covering scoring math, parsing, routing, and key-handling
+- **154 unit tests** — the *test suite* runs fully offline (the benchmark and Live Test make real API calls; the tests don't), covering scoring math, parsing, routing, and key-handling
 
 ---
 
@@ -223,7 +223,7 @@ streamlit run dashboard.py
 pytest tests/
 ```
 
-150 tests. The test suite runs fully offline — no API calls, no keys needed — so it's fast and free to run. Covers scoring math, judge output parsing, SDK routing, routing-table derivation, BYOK key resolution, and security invariants. (The benchmark pipeline and Live Test do make real API calls — these tests verify the logic around them.)
+154 tests. The test suite runs fully offline — no API calls, no keys needed — so it's fast and free to run. Covers scoring math, judge output parsing, SDK routing, routing-table derivation, BYOK key resolution, and security invariants. (The benchmark pipeline and Live Test do make real API calls — these tests verify the logic around them.)
 
 ---
 
@@ -269,7 +269,7 @@ llm-eval-lab/
 ├── dashboard.py      # Streamlit dashboard
 ├── .streamlit/
 │   └── config.toml   # Deploy + security hardening (telemetry off, XSRF/CORS on)
-├── tests/            # 150 unit tests — no API calls
+├── tests/            # 154 unit tests — no API calls
 └── data/
     ├── index.json    # Registry of every run
     └── runs/
